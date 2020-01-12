@@ -1,4 +1,4 @@
-package lucky.charms.storage.sizeable;
+package luckycharms.storage.sizeable;
 
 public class Sizes {
    public static final int BYTE = Byte.BYTES;

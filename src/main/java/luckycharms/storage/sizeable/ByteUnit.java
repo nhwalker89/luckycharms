@@ -1,4 +1,4 @@
-package lucky.charms.storage.sizeable;
+package luckycharms.storage.sizeable;
 
 public enum ByteUnit {
    BYTE(1), //

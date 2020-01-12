@@ -1,4 +1,4 @@
-package lucky.charms.storage.sizeable;
+package luckycharms.storage.sizeable;
 
 import java.util.Objects;
 import java.util.stream.DoubleStream;

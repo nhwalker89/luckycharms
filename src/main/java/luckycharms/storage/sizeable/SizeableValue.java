@@ -1,4 +1,4 @@
-package lucky.charms.storage.sizeable;
+package luckycharms.storage.sizeable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
