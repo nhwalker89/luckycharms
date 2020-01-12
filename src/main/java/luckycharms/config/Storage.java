@@ -14,6 +14,8 @@ public class Storage {
    public static final File propertyStoreFile = new File(rootDirectory,
          "property-store.properties");
 
+   public static final File marketDayDatasetDir = new File(rootDirectory, "market-day-dataset");
+
    static {
       try {
          if (!rootDirectory.exists()) {
