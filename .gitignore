@@ -8,4 +8,5 @@ build
 .project
 
 # Storage
-src/main/secret
+/src/main/secret
+/storage

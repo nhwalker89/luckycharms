@@ -26,6 +26,39 @@ package lucky.charms.protos;
 // =====================================================================
 // =====================================================================
 
+/**
+ * Used to indicate a time index
+ */
 message IndexedKeyProto { 
     int64 index = 1;
+}
+
+/**
+ * Entry in a paged data set
+ */
+message PagedDataEntryProto {
+   bytes key = 1;
+   bytes value = 2;
+}
+
+/**
+ * A Paged Dataset Page
+ */
+message PagedDataProto {
+   repeated PagedDataEntryProto values = 1;
+}
+
+/**
+ * A name-value property pair
+ */
+message PropertyValueProto {
+    string name = 1;
+    bytes payload = 2;
+}
+
+/**
+ * A list of name-value property pairs
+ */
+message PropertiesProto {
+    repeated PropertyValueProto property = 1;
 }
