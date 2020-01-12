@@ -71,7 +71,7 @@ sourceSets {
             srcDirs 'src/main/proto'
         }
         resources {
-            srcDirs 'shared'
+            srcDirs 'src/main/secret'
         }
     }
 }
