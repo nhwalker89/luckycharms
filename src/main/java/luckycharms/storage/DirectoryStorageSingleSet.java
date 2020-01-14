@@ -69,7 +69,6 @@ public class DirectoryStorageSingleSet implements IStorage {
       } catch (IOException e) {
          sLog.error("Problem saving index", e);
       }
-
    }
 
    @Override

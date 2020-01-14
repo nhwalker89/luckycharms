@@ -16,6 +16,9 @@ public final class SecretConfig {
 
    private static volatile String storageDirectory = null;
 
+   private static volatile String alpacaKeyID = null;
+   private static volatile String alpacaSecretKey = null;
+
    private static Properties load() {
       Properties p = new Properties();
       try (InputStream s = ClassLoader.getSystemResourceAsStream("secret.properties")) {
@@ -26,8 +29,21 @@ public final class SecretConfig {
 
       // load
       storageDirectory = p.getProperty("storageDirectory", "./storage");
+      alpacaKeyID = p.getProperty("alpacaKeyID");
+      alpacaSecretKey = p.getProperty("alpacaSecretKey");
+
+      verify();
 
       return p;
+   }
+
+   private static void verify() {
+      if (alpacaKeyID == null) {
+         sLog.error("Alpaca Key ID Missing");
+      }
+      if (alpacaSecretKey == null) {
+         sLog.error("Alpaca Key ID Missing");
+      }
    }
 
    public static String storageDirectory() {
@@ -35,4 +51,13 @@ public final class SecretConfig {
       return storageDirectory;
    }
 
+   public static String alpacaKeyID() {
+      sProps.init();
+      return alpacaKeyID;
+   }
+
+   public static String alpacaSecretKey() {
+      sProps.init();
+      return alpacaSecretKey;
+   }
 }
