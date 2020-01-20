@@ -1,5 +1,10 @@
 package luckycharms.time;
 
+import static java.time.temporal.ChronoField.HOUR_OF_DAY;
+import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
+import static java.time.temporal.ChronoField.NANO_OF_SECOND;
+import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -7,6 +12,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 
 import luckycharms.time.units.DaysKey;
 
@@ -46,4 +53,15 @@ public class MarketTimeUtils {
    public static ZonedDateTime inMarketTime(DaysKey day, LocalTime time) {
       return ZonedDateTime.of(day.time().toLocalDate(), time, MARKET_ZONE);
    }
+
+   public static String format(long millis) {
+      ZonedDateTime zdt = inMarketTime(Instant.ofEpochMilli(millis));
+      return sFormat.format(zdt);
+   }
+
+   private static final DateTimeFormatter sFormat = new DateTimeFormatterBuilder()
+         .parseCaseInsensitive().append(DateTimeFormatter.ISO_LOCAL_DATE).appendLiteral(' ')
+         .appendValue(HOUR_OF_DAY, 2).appendLiteral(':').appendValue(MINUTE_OF_HOUR, 2)
+         .optionalStart().appendLiteral(':').appendValue(SECOND_OF_MINUTE, 2).optionalStart()
+         .appendFraction(NANO_OF_SECOND, 0, 3, true).toFormatter();
 }

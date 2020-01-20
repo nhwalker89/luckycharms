@@ -1,23 +1,15 @@
 package testing.rest;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
+import luckycharms.logging.Markers;
 
 public class RestTest {
+   private static final org.slf4j.Logger sLog = org.slf4j.LoggerFactory.getLogger(RestTest.class);
 
    public static void main(String[] args) {
-      HttpClient client = HttpClient.newHttpClient();
-      HttpRequest request = HttpRequest.newBuilder()//
-            .uri(URI.create("http://openjdk.java.net/"))//
-            .build();
-      client//
-            .sendAsync(request, BodyHandlers.ofString())//
-            .thenApply(HttpResponse::body)//
-            .thenAccept(System.out::println)//
-            .join();
+      sLog.info(Markers.ALPACA, "Alpaca");
+      sLog.info(Markers.REST,
+            "ABCDEFGXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+      sLog.error("121");
    }
 
 }

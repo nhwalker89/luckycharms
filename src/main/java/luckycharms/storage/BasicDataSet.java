@@ -88,6 +88,7 @@ public class BasicDataSet<K extends ISizeable, V extends ISizeable> extends ADat
       storage.save(stringKey, valueBytes);
       cache.put(new DataSetCacheKey(this, key), Optional.of(value));
 
+      onChange();
    }
 
    @Override
@@ -101,6 +102,8 @@ public class BasicDataSet<K extends ISizeable, V extends ISizeable> extends ADat
             throw e;
          }
          cache.put(new DataSetCacheKey(this, key), Optional.empty());
+
+         onChange();
       }
    }
 
@@ -117,6 +120,7 @@ public class BasicDataSet<K extends ISizeable, V extends ISizeable> extends ADat
    @Override
    public void saveIndex() {
       storage.saveIndex(index);
+      onChange();
    }
 
 }

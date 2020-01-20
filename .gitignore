@@ -10,3 +10,4 @@ build
 # Storage
 /src/main/secret
 /storage
+/logs

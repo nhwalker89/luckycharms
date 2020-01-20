@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration status="warn"
+	packages="luckycharms.logging.plugins">
+	<Properties>
+		<Property name="basePath">./logs</Property>
+		<Property name="baseFormat">[%-5level] %d{DEFAULT}{America/New_York} [%t]
+			%c{-1}%notEmpty{[%marker]} - %msg%n%xEx</Property>
+	</Properties>
+
+	<Appenders>
+
+
+		<RollingRandomAccessFile name="rest_log"
+			fileName="${basePath}/luckycharms-rest.html"
+			filePattern="${basePath}/luckycharms-rest-%d{yyyy-MM-dd}-%i.html"
+			append="true">
+			<BasicHtmlLayout/>
+			<MarkerFilter marker="REST" onMatch="ACCEPT"
+				onMismatch="DENY" />
+			<Policies>
+				<OnStartupTriggeringPolicy />
+				<TimeBasedTriggeringPolicy interval="1" />
+			</Policies>
+			<DefaultRolloverStrategy max="20" />
+		</RollingRandomAccessFile>
+
+      <Async name="async_rest_log">
+         <AppenderRef ref="rest_log"/>
+      </Async>
+
+		<RollingRandomAccessFile name="file_log"
+			fileName="${basePath}/luckycharms.log"
+			filePattern="${basePath}/luckycharms-%d{yyyy-MM-dd}-%i.log"
+			append="true">
+			<PatternLayout pattern="${baseFormat}" />
+			<MarkerFilter marker="REST" onMatch="DENY"
+				onMismatch="NEUTRAL" />
+			<Policies>
+				<OnStartupTriggeringPolicy />
+				<TimeBasedTriggeringPolicy interval="1" />
+			</Policies>
+			<DefaultRolloverStrategy max="20" />
+		</RollingRandomAccessFile>
+
+		<Console name="console" target="SYSTEM_OUT">
+			<MarkerFilter marker="REST" onMatch="DENY"
+				onMismatch="NEUTRAL" />
+			<PatternLayout pattern="%highlight{${baseFormat}}" />
+		</Console>
+
+	</Appenders>
+	<Loggers>
+	
+		<Root level="info" additivity="false">
+			<appender-ref ref="console" />
+			<appender-ref ref="file_log" />
+			<appender-ref ref="async_rest_log" />
+		</Root>
+
+	</Loggers>
+</Configuration>

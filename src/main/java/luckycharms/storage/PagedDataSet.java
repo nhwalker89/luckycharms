@@ -27,7 +27,7 @@ import luckycharms.util.sizeable.ISizeable;
 import luckycharms.util.sizeable.LazySizeable;
 
 public class PagedDataSet<K extends ISizeable, V extends ISizeable, PK extends ISizeable>
-      implements IDataSet<K, V>, IPagedDataSet<K, PK, V> {
+      extends ADataSet<K, V> implements IPagedDataSet<K, PK, V> {
    private static final String DIVISOR = System.lineSeparator() + Strings.repeat("-", 50)
          + System.lineSeparator();
 
@@ -90,6 +90,8 @@ public class PagedDataSet<K extends ISizeable, V extends ISizeable, PK extends I
       }
       page = page.modify(m -> m.put(key, value));
       pagedDataSet.put(pk, page);
+
+      onChange();
    }
 
    @Override
@@ -108,6 +110,8 @@ public class PagedDataSet<K extends ISizeable, V extends ISizeable, PK extends I
          page = page.modify(m -> e.getValue().forEach(v -> m.put(v.getKey(), v.getValue())));
          pagedDataSet.put(e.getKey(), page);
       }
+
+      onChange();
    }
 
    @Override
@@ -123,6 +127,8 @@ public class PagedDataSet<K extends ISizeable, V extends ISizeable, PK extends I
       } else {
          pagedDataSet.put(pk, page);
       }
+
+      onChange();
    }
 
    @Override
@@ -139,6 +145,7 @@ public class PagedDataSet<K extends ISizeable, V extends ISizeable, PK extends I
    @Override
    public void saveIndex() {
       storage.saveIndex(index);
+      onChange();
    }
 
    @Override

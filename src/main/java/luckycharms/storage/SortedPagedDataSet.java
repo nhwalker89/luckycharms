@@ -32,7 +32,7 @@ import luckycharms.util.sizeable.LazySizeable;
 
 public class SortedPagedDataSet<K extends Comparable<? super K> & ISizeable, V extends ISizeable,
       PK extends Comparable<? super PK> & ISizeable> //
-      implements ISortedDataSet<K, V>, IPagedDataSet<K, PK, V> {
+      extends ADataSet<K, V> implements ISortedDataSet<K, V>, IPagedDataSet<K, PK, V> {
    private static final String DIVISOR = System.lineSeparator() + Strings.repeat("-", 50)
          + System.lineSeparator();
    private final Converter<PK, String> pageKeyFn;
@@ -95,6 +95,8 @@ public class SortedPagedDataSet<K extends Comparable<? super K> & ISizeable, V e
       }
       page = page.modify(m -> m.put(key, value));
       pagedDataSet.put(pk, page);
+
+      onChange();
    }
 
    @Override
@@ -113,6 +115,8 @@ public class SortedPagedDataSet<K extends Comparable<? super K> & ISizeable, V e
          page = page.modify(m -> e.getValue().forEach(v -> m.put(v.getKey(), v.getValue())));
          pagedDataSet.put(e.getKey(), page);
       }
+
+      onChange();
    }
 
    @Override
@@ -128,6 +132,8 @@ public class SortedPagedDataSet<K extends Comparable<? super K> & ISizeable, V e
       } else {
          pagedDataSet.put(pk, page);
       }
+
+      onChange();
    }
 
    @Override
@@ -150,6 +156,7 @@ public class SortedPagedDataSet<K extends Comparable<? super K> & ISizeable, V e
    @Override
    public void saveIndex() {
       storage.saveIndex(index);
+      onChange();
    }
 
    @Override
