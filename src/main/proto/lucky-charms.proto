@@ -64,5 +64,5 @@ message PropertiesProto {
 }
 
 message LocalTimeProto {
-   int64 nanos = 2;
+   int64 nanos = 1;
 }

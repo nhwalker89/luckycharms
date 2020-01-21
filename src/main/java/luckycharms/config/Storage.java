@@ -16,11 +16,20 @@ public class Storage {
 
    public static final File marketDayDatasetDir = new File(rootDirectory, "market-day-dataset");
 
+   public static final File dailyPricesDatasetDir = new File(rootDirectory,
+         "daily-prices-datasets");
+
    static {
       try {
          if (!rootDirectory.exists()) {
             rootDirectory.mkdirs();
             if (!rootDirectory.exists()) {
+               throw new IOException("No storage directory despite attempt to create");
+            }
+         }
+         if (!dailyPricesDatasetDir.exists()) {
+            dailyPricesDatasetDir.mkdirs();
+            if (!dailyPricesDatasetDir.exists()) {
                throw new IOException("No storage directory despite attempt to create");
             }
          }

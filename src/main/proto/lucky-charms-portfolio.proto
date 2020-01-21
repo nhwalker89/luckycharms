@@ -15,31 +15,39 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "luckycharms.protos.datasets";
+option java_package = "luckycharms.protos.portfolio";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "lucky-charms.proto";
 
-package lucky.charms.protos.datasets;
+package lucky.charms.protos.portfolio;
 
 // =====================================================================
 // =====================================================================
 // =====================================================================
 
-/**
- * Used to indicate a time index
- */
-message MarketDayDataProto { 
-    lucky.charms.protos.IndexedKeyProto date = 1;
-    lucky.charms.protos.LocalTimeProto open = 2;
-    lucky.charms.protos.LocalTimeProto close = 3;
+
+message PositionShareDataProto{
+    IndexedKeyProto  purchaseDate = 1;
 }
 
-message PriceBarProto {
-    double open = 1;
-    double close = 2;
-    double high = 3;
-    double low  = 4;
-    double volume = 5;
+message PositionProto {
+    string symbol = 1;
+    repeated PositionShareDataProto shares = 2;
+}
+
+message PortfolioStateProto {
+    double cash = 1;
+    repeated PositionProto position = 2;
+}
+
+message SharePriceProto {
+    string symbol = 1;
+    google.protobuf.DoubleValue pricePerShare = 2;
+}
+
+message PortfolioWorthProto {
+    PortfolioStateProto portfolioState = 1;
+    repeated SharePriceProto prices = 2;
 }
