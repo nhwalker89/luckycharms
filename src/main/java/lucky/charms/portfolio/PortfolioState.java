@@ -1,64 +1,115 @@
 package lucky.charms.portfolio;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Converter;
+import com.google.common.collect.ImmutableMap;
 
+import lucky.charms.runner.IRunnerContext;
+import luckycharms.protos.portfolio.PortfolioStateProto;
 import luckycharms.time.units.DaysKey;
+import luckycharms.util.ProtobufSerializer;
 import luckycharms.util.sizeable.ISizeable;
 import luckycharms.util.sizeable.LazySizeable;
+import luckycharms.util.sizeable.SizeableValue.SizeableString;
 import luckycharms.util.sizeable.Sizes;
 
 public class PortfolioState implements ISizeable {
 
-//   public static final Converter<PortfolioState, byte[]> FORMAT = Converter
-//         .from(PortfolioState::toProto, PortfolioState::new)
-//         .andThen(new ProtobufSerializer<>(PortfolioStateProto::parseFrom));
+   public static final Converter<PortfolioState, byte[]> FORMAT = Converter
+         .from(PortfolioState::toProto, PortfolioState::new)
+         .andThen(new ProtobufSerializer<>(PortfolioStateProto::parseFrom));
 
-   private double cash;
+   private final double cash;
 
-   private List<Position> positions;
+   private final Map<String, Position> positions;
 
    private final LazySizeable byteSize = new LazySizeable(this::computeByteSize);
 
-   public PortfolioState(double cash, List<Position> positions) {
-      this.cash = cash;
-      this.positions = ImmutableList.copyOf(positions.stream().sorted().toArray(Position[]::new));
+   public PortfolioState() {
+      this(0.0, ImmutableMap.of());
    }
 
-//   public PortfolioState(PortfolioStateProto proto) {
-//      cash = proto.getCash();
-//      Position[] pos = proto.getPositionList().stream().map(Position::new).sorted()
-//            .toArray(Position[]::new);
-//      this.positions = ImmutableList.copyOf(pos);
-//   }
+   public PortfolioState(double cash, Collection<Position> positions) {
+      this.cash = cash;
+      this.positions = positions.stream().collect(ImmutableMap.toImmutableMap(//
+            Position::getSymbol, Function.identity(), //
+            (a, b) -> a.merge(b)));
+   }
 
-   public PortfolioState updatePositions(Map<String, Integer> newPositions, DaysKey today) {
-      Map<String, Position> curMap = positions.stream()
-            .collect(Collectors.toMap(Position::getSymbol, Function.identity()));
-      ArrayList<Position> values = new ArrayList<>(positions.size());
-      for (Entry<String, Integer> newPos : newPositions.entrySet()) {
-         Position oldPos = curMap.get(newPos.getKey());
-         if (oldPos == null) {
-            values.add(new Position(newPos.getKey(), today, newPos.getValue()));
+   public PortfolioState(double cash, Map<String, Position> positions) {
+      this.cash = cash;
+      this.positions = ImmutableMap.copyOf(positions);
+   }
+
+   public PortfolioState(PortfolioStateProto proto) {
+      this(proto.getCash(), proto.getPositionList().stream()//
+            .map(Position::new).collect(Collectors.toList()));
+   }
+
+   public PortfolioState removePositions(Map<String, Integer> toRemove) {
+      Map<String, Position> values = new HashMap<>(this.positions);
+      for (Entry<String, Integer> entry : toRemove.entrySet()) {
+         if (entry.getValue().intValue() < 0) {
+            throw new IllegalArgumentException("Cannot remove negative positions");
+         } else if (entry.getValue().intValue() == 0) {
+            // do nothing
          } else {
-            values.add(oldPos.updateQty(newPos.getValue(), today));
+            Position oldPos = values.get(entry.getKey());
+            int oldShares = oldPos == null ? 0 : oldPos.getSharesCount();
+
+            int count = oldShares;
+            count -= entry.getValue().intValue();
+            if (count < 0) {
+               throw new IllegalArgumentException("Cannot remove " //
+                     + entry.getValue().intValue() + " from "//
+                     + oldShares + " shares of symbol " + entry.getValue());
+            }
+            if (count > 0) {
+               values.put(entry.getKey(), oldPos.updateQty(count, null));
+            }
+
          }
+
       }
-      return new PortfolioState(cash, values);
+      return new PortfolioState(getCash(), values);
+   }
+
+   public PortfolioState addPositions(DaysKey today, Map<String, Integer> toAdd) {
+      Map<String, Position> values = new HashMap<>(this.positions);
+      for (Entry<String, Integer> entry : toAdd.entrySet()) {
+         if (entry.getValue().intValue() < 0) {
+            throw new IllegalArgumentException("Cannot add negative positions");
+         } else if (entry.getValue().intValue() == 0) {
+            // do nothing
+         } else {
+            Position oldPos = values.get(entry.getKey());
+            int oldShares = oldPos == null ? 0 : oldPos.getSharesCount();
+
+            int count = oldShares;
+            count += entry.getValue().intValue();
+            if (count > 0) {
+               values.put(entry.getKey(), oldPos == null //
+                     ? new Position(entry.getKey(), today, count)//
+                     : oldPos.updateQty(count, today));
+            }
+
+         }
+
+      }
+      return new PortfolioState(getCash(), values);
    }
 
    public PortfolioState updateCash(double newCash) {
       return new PortfolioState(newCash, positions);
    }
 
-   public List<Position> getPositions() { return positions; }
+   public Map<String, Position> getPositions() { return positions; }
 
    public double getCash() { return cash; }
 
@@ -66,12 +117,13 @@ public class PortfolioState implements ISizeable {
 //      return new PortfolioWorth(this, context);
 //   }
 
-//   public PortfolioStateProto toProto() {
-//      return PortfolioStateProto.newBuilder()//
-//            .setCash(cash)//
-//            .addAllPosition(positions.stream().map(Position::toProto).collect(Collectors.toList()))//
-//            .build();
-//   }
+   public PortfolioStateProto toProto() {
+      return PortfolioStateProto.newBuilder()//
+            .setCash(cash)//
+            .addAllPosition(positions.values()//
+                  .stream().map(Position::toProto).collect(Collectors.toList()))//
+            .build();
+   }
 
    @Override
    public double byteSize() {
@@ -79,15 +131,17 @@ public class PortfolioState implements ISizeable {
    }
 
    public Position getPosition(String symbol) {
-      Position pos = new Position(symbol);
-      int idx = Collections.binarySearch(positions, pos);
-      if (idx > 0) {
-         return positions.get(idx);
-      }
-      return null;
+      return positions.get(symbol);
+   }
+
+   public PortfolioWorth computeWorth(IRunnerContext ctx) {
+      PortfolioWorth worth = new PortfolioWorth(this, ctx);
+      return worth;
    }
 
    protected double computeByteSize() {
-      return (double) (ISizeable.sum(positions.stream()) + Sizes.DOUBLE);
+      return ISizeable.sum(positions.values().stream())//
+            + ISizeable.sum(positions.keySet().stream().map(SizeableString::new))//
+            + Sizes.DOUBLE;
    }
 }

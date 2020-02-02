@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 import com.google.common.base.Converter;
@@ -12,6 +13,8 @@ import com.google.common.cache.Cache;
 import luckycharms.util.sizeable.ISizeable;
 
 public class BasicDataSet<K extends ISizeable, V extends ISizeable> extends ADataSet<K, V> {
+
+   private final ReentrantLock sWriteLock = new ReentrantLock();
 
    private final IStorage storage;
    private final Cache<DataSetCacheKey, Optional<ISizeable>> cache;
@@ -85,9 +88,13 @@ public class BasicDataSet<K extends ISizeable, V extends ISizeable> extends ADat
          throw new IOException("Problem encoding data", e);
       }
 
-      storage.save(stringKey, valueBytes);
-      cache.put(new DataSetCacheKey(this, key), Optional.of(value));
-
+      sWriteLock.lock();
+      try {
+         storage.save(stringKey, valueBytes);
+         cache.put(new DataSetCacheKey(this, key), Optional.of(value));
+      } finally {
+         sWriteLock.unlock();
+      }
       onChange();
    }
 
@@ -96,15 +103,32 @@ public class BasicDataSet<K extends ISizeable, V extends ISizeable> extends ADat
       Objects.requireNonNull(key);
       String stringKey = keyFn.convert(key);
       if (stringKey != null) {
+         sWriteLock.lock();
          try {
             storage.remove(stringKey);
+            cache.put(new DataSetCacheKey(this, key), Optional.empty());
          } catch (IOException e) {
             throw e;
+         } finally {
+            sWriteLock.unlock();
          }
-         cache.put(new DataSetCacheKey(this, key), Optional.empty());
 
          onChange();
       }
+   }
+
+   @Override
+   public void clear() throws IOException {
+      pauseNotifications();
+      sWriteLock.lock();
+      try {
+         index.clear();
+         storage.clear();
+      } finally {
+         sWriteLock.unlock();
+      }
+      onChange();
+      resumeNotifications();
    }
 
    @Override
@@ -119,7 +143,12 @@ public class BasicDataSet<K extends ISizeable, V extends ISizeable> extends ADat
 
    @Override
    public void saveIndex() {
-      storage.saveIndex(index);
+      sWriteLock.lock();
+      try {
+         storage.saveIndex(index);
+      } finally {
+         sWriteLock.unlock();
+      }
       onChange();
    }
 

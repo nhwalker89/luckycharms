@@ -14,19 +14,23 @@ public class StandardConfig {
          .getLogger(SecretConfig.class);
 
    private static final LazyRef<Properties> sProps = new LazyRef<>(StandardConfig::load);
+   private static volatile boolean isRestProgressReportsEnabled = false;
 
    private static Properties load() {
       Properties p = new Properties();
       try (InputStream s = ClassLoader.getSystemResourceAsStream("standard.properties")) {
          p.load(s);
+         isRestProgressReportsEnabled = //
+               Boolean.parseBoolean(p.getProperty("isRestProgressReportsEnabled", "false"));
       } catch (Exception e) {
          sLog.error("Couldn't load standard properties");
       }
       return p;
    }
 
-   public static int test() {
-      return Integer.parseInt(sProps.get().getProperty("test", "678"));
+   public static boolean isRestProgressReportsEnabled() {
+      sProps.get();
+      return isRestProgressReportsEnabled;
    }
 
 }

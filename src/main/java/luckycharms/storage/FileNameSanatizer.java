@@ -4,6 +4,14 @@ import com.google.common.base.Converter;
 
 public class FileNameSanatizer extends Converter<String, String> {
 
+   public static String sanatize(String pStr) {
+      return INSTANCE.convert(pStr);
+   }
+
+   public static String decode(String pStr) {
+      return INSTANCE.reverse().convert(pStr);
+   }
+
    private static final String LEGAL_CHARS = ".+-_[]()"//
          + "abcdefghijklmnopqrstuvwxyz" //
          + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"//

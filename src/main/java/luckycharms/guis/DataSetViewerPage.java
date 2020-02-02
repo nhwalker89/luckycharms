@@ -30,6 +30,10 @@ public class DataSetViewerPage<K, V> extends BorderPane {
    private final TextArea textArea;
 
    public DataSetViewerPage(IDataSet<K, V> ds) {
+      this(ds.toString(), ds);
+   }
+
+   public DataSetViewerPage(String name, IDataSet<K, V> ds) {
       dataset = ds;
       pageKeyListView = new ListView<>();
       pageKeyListView.setMinWidth(300);
@@ -47,7 +51,7 @@ public class DataSetViewerPage<K, V> extends BorderPane {
                }
             });
 
-      Label top = new Label(ds.toString());
+      Label top = new Label(name);
       ListView<?> left = pageKeyListView;
       setTop(top);
       setLeft(left);

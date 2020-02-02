@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -39,6 +40,7 @@ public class PagedDataSet<K extends ISizeable, V extends ISizeable, PK extends I
    private final IDataSet<PK, PagedData> pagedDataSet;
    private final IStorage storage;
    private final DataSetIndex index;
+   private final ReentrantLock sWriteLock = new ReentrantLock();
 
    public PagedDataSet(//
          Converter<PK, String> pageKeyFn, //
@@ -83,49 +85,62 @@ public class PagedDataSet<K extends ISizeable, V extends ISizeable, PK extends I
 
    @Override
    public void put(K key, V value) throws IOException {
-      PK pk = keyToPageKeyFn.apply(key);
-      PagedData page = pagedDataSet.get(Objects.requireNonNull(pk));
-      if (page == null) {
-         page = new PagedData();
+      sWriteLock.lock();
+      try {
+         PK pk = keyToPageKeyFn.apply(key);
+         PagedData page = pagedDataSet.get(Objects.requireNonNull(pk));
+         if (page == null) {
+            page = new PagedData();
+         }
+         page = page.modify(m -> m.put(key, value));
+         pagedDataSet.put(pk, page);
+      } finally {
+         sWriteLock.unlock();
       }
-      page = page.modify(m -> m.put(key, value));
-      pagedDataSet.put(pk, page);
-
       onChange();
    }
 
    @Override
    public void putAll(Stream<KeyValuePair<K, V>> entries) throws IOException {
-      Map<PK, List<KeyValuePair<K, V>>> batched = new HashMap<>();
-      entries.forEach(pair -> {
-         batched.computeIfAbsent(//
-               Objects.requireNonNull(keyToPageKeyFn.apply(pair.getKey())),
-               key -> new ArrayList<>()).add(pair);
-      });
-      for (Map.Entry<PK, List<KeyValuePair<K, V>>> e : batched.entrySet()) {
-         PagedData page = pagedDataSet.get(e.getKey());
-         if (page == null) {
-            page = new PagedData();
+      sWriteLock.lock();
+      try {
+         Map<PK, List<KeyValuePair<K, V>>> batched = new HashMap<>();
+         entries.forEach(pair -> {
+            batched.computeIfAbsent(//
+                  Objects.requireNonNull(keyToPageKeyFn.apply(pair.getKey())),
+                  key -> new ArrayList<>()).add(pair);
+         });
+         for (Map.Entry<PK, List<KeyValuePair<K, V>>> e : batched.entrySet()) {
+            PagedData page = pagedDataSet.get(e.getKey());
+            if (page == null) {
+               page = new PagedData();
+            }
+            page = page.modify(m -> e.getValue().forEach(v -> m.put(v.getKey(), v.getValue())));
+            pagedDataSet.put(e.getKey(), page);
          }
-         page = page.modify(m -> e.getValue().forEach(v -> m.put(v.getKey(), v.getValue())));
-         pagedDataSet.put(e.getKey(), page);
+      } finally {
+         sWriteLock.unlock();
       }
-
       onChange();
    }
 
    @Override
    public void remove(K key) throws IOException {
-      PK pk = keyToPageKeyFn.apply(key);
-      PagedData page = pagedDataSet.get(Objects.requireNonNull(pk));
-      if (page == null) {
-         return;
-      }
-      page = page.modify(m -> m.remove(key));
-      if (page.asMap().isEmpty()) {
-         pagedDataSet.remove(pk);
-      } else {
-         pagedDataSet.put(pk, page);
+      sWriteLock.lock();
+      try {
+         PK pk = keyToPageKeyFn.apply(key);
+         PagedData page = pagedDataSet.get(Objects.requireNonNull(pk));
+         if (page == null) {
+            return;
+         }
+         page = page.modify(m -> m.remove(key));
+         if (page.asMap().isEmpty()) {
+            pagedDataSet.remove(pk);
+         } else {
+            pagedDataSet.put(pk, page);
+         }
+      } finally {
+         sWriteLock.unlock();
       }
 
       onChange();
@@ -144,7 +159,12 @@ public class PagedDataSet<K extends ISizeable, V extends ISizeable, PK extends I
 
    @Override
    public void saveIndex() {
-      storage.saveIndex(index);
+      sWriteLock.lock();
+      try {
+         storage.saveIndex(index);
+      } finally {
+         sWriteLock.unlock();
+      }
       onChange();
    }
 
@@ -161,6 +181,18 @@ public class PagedDataSet<K extends ISizeable, V extends ISizeable, PK extends I
    @Override
    public IDataSet<PK, ? extends IPagedData<K, V>> pagedDataSet() {
       return pagedDataSet;
+   }
+
+   @Override
+   public void clear() throws IOException {
+      sWriteLock.lock();
+      try {
+         pagedDataSet.clear();
+         index.clear();
+      } finally {
+         sWriteLock.unlock();
+      }
+      onChange();
    }
 
    protected String formatPagedData(PagedData data) {

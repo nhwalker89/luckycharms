@@ -21,8 +21,8 @@ public abstract class ADataSet<K, V> extends AChanger implements IDataSet<K, V> 
    }
 
    @Override
-   public final String toString() {
-      return super.toString();
+   public String toString() {
+      return this.getClass().getSimpleName();
    }
 
    public void removeAll(Stream<K> keys) throws IOException {

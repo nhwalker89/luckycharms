@@ -1,8 +1,17 @@
 package lucky.charms.runner.log;
 
-import luckycharms.time.units.DaysKey;
+import lucky.charms.runner.IRunnerContext;
 
-public abstract class RunLog {
+public interface RunLog {
 
-   public abstract DailyRunLog createDailyRunLog(DaysKey key);
+   DailyRunLog createDailyRunLog(IRunnerContext ctx);
+
+   public static class LoggerBasedRunLog implements RunLog {
+
+      @Override
+      public DailyRunLog createDailyRunLog(IRunnerContext ctx) {
+         return new LoggerBasedDailyRunLog(ctx);
+      }
+
+   }
 }

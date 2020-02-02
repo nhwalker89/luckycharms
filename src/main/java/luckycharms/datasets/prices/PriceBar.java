@@ -1,5 +1,7 @@
 package luckycharms.datasets.prices;
 
+import java.util.Objects;
+
 import com.google.common.base.Converter;
 
 import luckycharms.protos.datasets.PriceBarProto;
@@ -20,11 +22,11 @@ public class PriceBar implements ISizeable {
    private static final double SIZE = Sizes.DOUBLE * 5;
 
    public PriceBar(PriceBarProto proto) {
-      open = proto.getOpen();
-      close = proto.getClose();
-      high = proto.getHigh();
-      low = proto.getLow();
-      volume = proto.getVolume();
+      open = proto.hasOpen() ? proto.getOpen().getValue() : null;
+      close = proto.hasClose() ? proto.getClose().getValue() : null;
+      high = proto.hasHigh() ? proto.getHigh().getValue() : null;
+      low = proto.hasLow() ? proto.getLow().getValue() : null;
+      volume = proto.hasVolume() ? proto.getVolume().getValue() : null;
    }
 
    public Double getClose() { return close; }
@@ -69,20 +71,60 @@ public class PriceBar implements ISizeable {
    public PriceBarProto toProto() {
       PriceBarProto.Builder b = PriceBarProto.newBuilder();
       if (this.hasClose()) {
-         b.setClose(this.getClose());
+         b.getCloseBuilder().setValue(this.getClose());
       }
       if (this.hasOpen()) {
-         b.setOpen(this.getOpen());
+         b.getOpenBuilder().setValue(this.getOpen());
       }
       if (this.hasHigh()) {
-         b.setHigh(this.getHigh());
+         b.getHighBuilder().setValue(this.getHigh());
       }
       if (this.hasLow()) {
-         b.setLow(this.getLow());
+         b.getLowBuilder().setValue(this.getLow());
       }
       if (this.hasVolume()) {
-         b.setVolume(this.getVolume());
+         b.getVolumeBuilder().setValue(this.getVolume());
       }
       return b.build();
    }
+
+   @Override
+   public String toString() {
+      StringBuilder builder = new StringBuilder();
+      builder.append("PriceBar [open=");
+      builder.append(open);
+      builder.append(", close=");
+      builder.append(close);
+      builder.append(", high=");
+      builder.append(high);
+      builder.append(", low=");
+      builder.append(low);
+      builder.append(", volume=");
+      builder.append(volume);
+      builder.append("]");
+      return builder.toString();
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(close, high, low, open, volume);
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) {
+         return true;
+      }
+      if (obj == null) {
+         return false;
+      }
+      if (getClass() != obj.getClass()) {
+         return false;
+      }
+      PriceBar other = (PriceBar) obj;
+      return Objects.equals(close, other.close) && Objects.equals(high, other.high)
+            && Objects.equals(low, other.low) && Objects.equals(open, other.open)
+            && Objects.equals(volume, other.volume);
+   }
+
 }

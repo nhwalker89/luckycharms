@@ -21,7 +21,7 @@ public class AChanger implements CanChange {
    }
 
    protected void onChange() {
-      if (paused.get().intValue() > 0) {
+      if (paused.get().intValue() == 0) {
          ChangeEventThread.sendOnChange(listeners);
       } else {
          waitingToSend.set(Boolean.TRUE);

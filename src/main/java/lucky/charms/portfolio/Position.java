@@ -3,10 +3,14 @@ package lucky.charms.portfolio;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Ordering;
 import com.google.common.collect.Range;
 
+import luckycharms.protos.portfolio.PositionProto;
 //import lucky.charms.protos.PositionProto;
 import luckycharms.time.units.DaysKey;
 import luckycharms.util.sizeable.ISizeable;
@@ -38,11 +42,11 @@ public final class Position implements Comparable<Position>, ISizeable {
       this.shares = list.build();
    }
 
-//   public Position(PositionProto proto) {
-//      this.symbol = proto.getSymbol();
-//      this.shares = ImmutableList.copyOf(proto.getSharesList().stream().map(PositionShareData::new)
-//            .sorted().collect(Collectors.toList()));
-//   }
+   public Position(PositionProto proto) {
+      this.symbol = proto.getSymbol();
+      this.shares = ImmutableList.copyOf(proto.getSharesList().stream().map(PositionShareData::new)
+            .sorted().collect(Collectors.toList()));
+   }
 
    private Position(String symbol, List<PositionShareData> data, boolean ALREADY_SORTED) {
       this.symbol = symbol;
@@ -139,10 +143,20 @@ public final class Position implements Comparable<Position>, ISizeable {
       return symbol + "[qty:" + getSharesCount() + "]";
    }
 
-//   public PositionProto toProto() {
-//      return PositionProto.newBuilder().setSymbol(symbol)
-//            .addAllShares(
-//                  shares.stream().map(PositionShareData::toProto).collect(Collectors.toList()))
-//            .build();
-//   }
+   public PositionProto toProto() {
+      return PositionProto.newBuilder().setSymbol(symbol)
+            .addAllShares(
+                  shares.stream().map(PositionShareData::toProto).collect(Collectors.toList()))
+            .build();
+   }
+
+   public Position merge(Position other) {
+      if (!getSymbol().equals(other.getSymbol())) {
+         throw new IllegalArgumentException("Cannot merge positions of different symbols");
+      }
+      String symbol = other.getSymbol();
+      return new Position(symbol, Ordering.natural().//
+            immutableSortedCopy(Iterables.concat(shares, other.shares)));
+
+   }
 }

@@ -4,7 +4,10 @@ import java.util.List;
 
 public interface IPicker {
 
-   List<String> pick(RunnerContext context);
+   default void beforeDailyExecution(IRunnerContext context) {
+      // Do Nothing
+   }
 
-   void beforeDailyExecution();
+   List<String> pick(IRunnerContext context);
+
 }

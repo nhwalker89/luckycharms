@@ -1,20 +1,27 @@
 package lucky.charms.portfolio;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 
+import lucky.charms.runner.IRunnerContext;
+
 public interface Portfolio {
 
-   PortfolioWorth getWorth();
+   PortfolioWorth getWorth(IRunnerContext ctx);
 
    PortfolioState getState();
 
-   void sell(Map<String, Integer> toSell);
+   void sell(IRunnerContext ctx, Map<String, Integer> toSell);
 
-   Duration waitForPendingSells(Duration ofMinutes);
+   Duration waitForPendingSells(IRunnerContext ctx, Duration ofMinutes);
 
-   void buy(Map<String, Integer> toBuy);
+   void buy(IRunnerContext ctx, Map<String, Integer> toBuy);
 
-   Duration waitForPendingBuys(Duration ofMinutes);
+   Duration waitForPendingBuys(IRunnerContext ctx, Duration ofMinutes);
+
+   void save(IRunnerContext ctx) throws IOException;
+
+   PortfolioDataSet dataset();
 
 }

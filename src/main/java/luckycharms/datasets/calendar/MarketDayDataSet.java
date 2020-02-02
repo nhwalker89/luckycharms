@@ -20,6 +20,7 @@ import luckycharms.time.units.DaysKey;
 import luckycharms.time.units.YearsKey;
 
 public class MarketDayDataSet extends SortedPagedDataSet<DaysKey, MarketDayData, YearsKey> {
+   private static final File CALENDAR_DS_FILE = Storage.marketDayDatasetDir;
 
    public static void main(String[] args) {
       try {
@@ -36,14 +37,11 @@ public class MarketDayDataSet extends SortedPagedDataSet<DaysKey, MarketDayData,
 
    private static final org.slf4j.Logger sLog = org.slf4j.LoggerFactory
          .getLogger(MarketDayDataSet.class);
-   @SuppressWarnings("unused")
    private static final LocalDate DATASET_DESIRED_START = LocalDate.of(2008, 1, 1);
 
    public static MarketDayDataSet instance() {
       return InstanceHolder.sInstance;
    }
-
-   private static final File CALENDAR_DS_FILE = Storage.marketDayDatasetDir;
 
    private MarketDayDataSet() {
       super(YearsKey.FORMAT, DaysKey.BYTE_FORMAT, MarketDayData.FORMAT, DaysKey::asYearKey,

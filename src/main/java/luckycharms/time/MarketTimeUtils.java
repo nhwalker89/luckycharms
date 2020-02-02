@@ -26,6 +26,8 @@ public class MarketTimeUtils {
          LocalTime.MIDNIGHT);
    public static final ZonedDateTime MARKET_EPOCH = ZonedDateTime.of(LOCAL_EPOCH, MARKET_ZONE);
 
+   public static final LocalTime WELL_AFTER_MARKET_CLOSE = LocalTime.of(12 + 6, 0); // 6 PM
+
    public static ZonedDateTime now() {
       return ZonedDateTime.now(MARKET_CLOCK);
    }

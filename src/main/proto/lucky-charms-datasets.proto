@@ -37,9 +37,9 @@ message MarketDayDataProto {
 }
 
 message PriceBarProto {
-    double open = 1;
-    double close = 2;
-    double high = 3;
-    double low  = 4;
-    double volume = 5;
+    google.protobuf.DoubleValue open = 1;
+    google.protobuf.DoubleValue close = 2;
+    google.protobuf.DoubleValue high = 3;
+    google.protobuf.DoubleValue low  = 4;
+    google.protobuf.DoubleValue volume = 5;
 }

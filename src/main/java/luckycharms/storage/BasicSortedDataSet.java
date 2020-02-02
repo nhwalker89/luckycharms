@@ -42,15 +42,19 @@ public class BasicSortedDataSet<K extends Comparable<? super K> & ISizeable, V e
 
    @Override
    public void put(K key, V value) throws IOException {
-      keySet.add(key);
-
       super.put(key, value);
+      keySet.add(key);
    }
 
    @Override
    public void remove(K key) throws IOException {
       keySet.remove(key);
-
       super.remove(key);
+   }
+
+   @Override
+   public void clear() throws IOException {
+      keySet.clear();
+      super.clear();
    }
 }

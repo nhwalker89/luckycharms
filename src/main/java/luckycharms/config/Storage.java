@@ -19,22 +19,27 @@ public class Storage {
    public static final File dailyPricesDatasetDir = new File(rootDirectory,
          "daily-prices-datasets");
 
+   public static final File portfolioDatasetDir = new File(rootDirectory, "portfolio-datasets");
+
    static {
+
       try {
-         if (!rootDirectory.exists()) {
-            rootDirectory.mkdirs();
-            if (!rootDirectory.exists()) {
-               throw new IOException("No storage directory despite attempt to create");
-            }
-         }
-         if (!dailyPricesDatasetDir.exists()) {
-            dailyPricesDatasetDir.mkdirs();
-            if (!dailyPricesDatasetDir.exists()) {
-               throw new IOException("No storage directory despite attempt to create");
-            }
-         }
+         createDirIfMissing(rootDirectory);
+         createDirIfMissing(marketDayDatasetDir);
+         createDirIfMissing(dailyPricesDatasetDir);
+         createDirIfMissing(portfolioDatasetDir);
+
       } catch (Exception e) {
          sLog.error("Problem setting up storage directories", e);
+      }
+   }
+
+   private static void createDirIfMissing(File dir) throws IOException {
+      if (!dir.exists()) {
+         dir.mkdirs();
+         if (!dir.exists()) {
+            throw new IOException("Failed to setup storage directory " + dir);
+         }
       }
    }
 

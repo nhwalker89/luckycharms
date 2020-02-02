@@ -7,51 +7,27 @@ import java.util.Map;
 import lucky.charms.portfolio.PortfolioState;
 import lucky.charms.portfolio.PortfolioWorth;
 
-public class DailyRunLog {
+public interface DailyRunLog {
 
-   public void logStocksPicked(List<String> picks) {
-      // TODO Auto-generated method stub
+   public void logStocksPicked(List<String> picks);
 
-   }
+   public void logStocksToSell(Map<String, Integer> toSell);
 
-   public void logStocksToSell(Map<String, Integer> toSell) {
-      // TODO Auto-generated method stub
+   public void logTimeWaitedForBulkSell(Duration timeWaited);
 
-   }
+   public void logStocksToBuy(Map<String, Integer> toBuy);
 
-   public void logTimeWaitedForBulkSell(Duration timeWaited) {
-      // TODO Auto-generated method stub
+   public void logTimeWaitedForBulkBuy(Duration timeWaited);
 
-   }
+   public void logExtraBuy(String symbol);
 
-   public void logStocksToBuy(Map<String, Integer> toBuy) {
-      // TODO Auto-generated method stub
+   public void logTimeWaitedForExtraBuy(Duration timeWaited);
 
-   }
+   public void logEndOfDayPortfolio(PortfolioState state, PortfolioWorth worth);
 
-   public void logTimeWaitedForBulkBuy(Duration timeWaited) {
-      // TODO Auto-generated method stub
+   public void logStartOfDayPortfolio(PortfolioState state, PortfolioWorth worth);
 
-   }
+   public void dayEnded();
 
-   public void logExtraBuy(String symbol) {
-      // TODO Auto-generated method stub
-
-   }
-
-   public void logTimeWaitedForExtraBuy(Duration timeWaited) {
-      // TODO Auto-generated method stub
-
-   }
-
-   public void logEndOfDayPortfolio(PortfolioState state, PortfolioWorth worth) {
-      // TODO Auto-generated method stub
-
-   }
-
-   public void logStartOfDayPortfolio(PortfolioState state, PortfolioWorth worth) {
-      // TODO Auto-generated method stub
-
-   }
-
+   public void dayStarted();
 }

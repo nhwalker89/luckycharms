@@ -10,6 +10,8 @@ public interface IStorage {
 
    void remove(String stringKey) throws IOException;
 
+   void clear() throws IOException;
+
    Stream<String> keyStream();
 
    void saveIndex(DataSetIndex index);

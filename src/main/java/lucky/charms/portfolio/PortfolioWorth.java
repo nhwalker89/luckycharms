@@ -1,121 +1,102 @@
 package lucky.charms.portfolio;
 
-import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
+import java.util.OptionalDouble;
+import java.util.stream.Collectors;
 
+import com.google.common.base.Converter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.protobuf.DoubleValue;
+
+import lucky.charms.runner.IRunnerContext;
+import luckycharms.protos.portfolio.PortfolioStateProto;
+import luckycharms.protos.portfolio.PortfolioWorthProto;
+import luckycharms.protos.portfolio.SharePriceProto;
+import luckycharms.util.ProtobufSerializer;
+import luckycharms.util.Tabler;
 import luckycharms.util.sizeable.ISizeable;
 import luckycharms.util.sizeable.LazySizeable;
+import luckycharms.util.sizeable.SizeableValue.SizeableString;
 import luckycharms.util.sizeable.Sizes;
 
 public class PortfolioWorth implements ISizeable {
 
-//   public static final Converter<PortfolioWorth, byte[]> FORMAT = Converter
-//         .from(PortfolioWorth::toProto, PortfolioWorth::new)
-//         .andThen(new ProtobufSerializer<>(PortfolioWorthProto::parseFrom));
+   public static final Converter<PortfolioWorth, byte[]> BYTE_FORMAT = Converter
+         .from(PortfolioWorth::toProto, PortfolioWorth::new)
+         .andThen(new ProtobufSerializer<>(PortfolioWorthProto::parseFrom));
 
-   private final ZonedDateTime timestamp;
-   private final Map<Position, Double> pricesPerPosition;
-   private final double totalWorth;
-   private final double cash;
-   private final boolean hasUnresolvedPositions;
-
+   private final PortfolioState portfolioState;
+   private final ImmutableMap<String, Double> pricesPerShare;
    private final LazySizeable byteSize = new LazySizeable(this::computeByteSize);
 
-//   public PortfolioWorth(PortfolioWorthProto proto) {
-//      Instant inst = Instant.ofEpochSecond(proto.getTimestamp().getSeconds(),
-//            proto.getTimestamp().getNanos());
-//      this.timestamp = MarketTimeUtils.inMarketTime(inst);
-//      this.cash = proto.getCash();
-//      TreeMap<Position, Double> positions = new TreeMap<>();
-//      boolean hasUnresolvedPositions = false;
-//
-//      double sum = this.cash;
-//      for (PositionWithWorthProto pos : proto.getPositionList()) {
-//         Position unbox = new Position(pos.getPosition());
-//         if (pos.hasWorth()) {
-//            positions.put(unbox, pos.getWorth().getValue());
-//            sum += pos.getWorth().getValue();
-//         } else {
-//            hasUnresolvedPositions = true;
-//            positions.put(unbox, Double.NaN);
-//         }
-//      }
-//      this.pricesPerPosition = Collections.unmodifiableMap(positions);
-//      this.hasUnresolvedPositions = hasUnresolvedPositions;
-//      this.totalWorth = sum;
-//   }
-
-   public PortfolioWorth(PortfolioState state
-//         , RunnerContext context
-   ) {
-
-      Iterator<String> symbols = state.getPositions().stream().map(Position::getSymbol).distinct()
-            .iterator();
-      Map<String, Double> pricesPerShare = null;// TODO context.currentPrices(symbols);
-      this.timestamp = null; // TODO context.now();
-
-      boolean hasUnresolvedPosition = false;
-      double sum = state.getCash();
-      TreeMap<Position, Double> result = new TreeMap<>();
-      for (Position pos : state.getPositions()) {
-         Double price = pricesPerShare.get(pos.getSymbol());
-         if (price == null || !Double.isFinite(price.doubleValue())) {
-            hasUnresolvedPosition = true;
-            result.put(pos, Double.NaN);
-         } else {
-            double value = price * pos.getSharesCount();
-            sum += value;
-            result.put(pos, value);
-         }
-      }
-
-      this.pricesPerPosition = Collections.unmodifiableMap(result);
-      this.totalWorth = sum;
-      this.cash = state.getCash();
-      this.hasUnresolvedPositions = hasUnresolvedPosition;
+   public PortfolioWorth(PortfolioState state, IRunnerContext ctx) {
+      this.portfolioState = state;
+      this.pricesPerShare = ImmutableMap
+            .copyOf(ctx.currentPrices(state.getPositions().keySet().iterator()));
    }
 
-   public ZonedDateTime getTimestamp() { return timestamp; }
+   public PortfolioWorth(PortfolioWorthProto proto) {
+      PortfolioStateProto stateProto = proto.getPortfolioState();
+      portfolioState = new PortfolioState(stateProto);
 
-   public Map<Position, Double> getPricesPerPosition() { return pricesPerPosition; }
+      List<SharePriceProto> sharePricesProto = proto.getPricesList();
+      ImmutableMap.Builder<String, Double> sharePricesMap = ImmutableMap.builder();
+      for (SharePriceProto priceProto : sharePricesProto) {
+         if (priceProto.hasPricePerShare()) {
+            sharePricesMap.put(priceProto.getSymbol(), priceProto.getPricePerShare().getValue());
+         }
+      }
+      pricesPerShare = sharePricesMap.build();
 
-   public double getTotalWorth() { return totalWorth; }
+   }
 
-   public double getCash() { return cash; }
+   public Map<String, Double> getPricesPerShare() { return pricesPerShare; }
+
+   public OptionalDouble getPricePerShare(String symbol) {
+      Double v = pricesPerShare.get(symbol);
+      return v == null ? OptionalDouble.empty() : OptionalDouble.of(v.doubleValue());
+   }
+
+   public OptionalDouble getPriceOfPosition(Position pos) {
+      OptionalDouble price = getPricePerShare(pos.getSymbol());
+      if (price == null) {
+         return OptionalDouble.empty();
+      }
+      return OptionalDouble.of(price.getAsDouble() * pos.getSharesCount());
+   }
+
+   public PortfolioState getPortfolioState() { return portfolioState; }
+
+   public double getTotalWorth() {
+      return portfolioState.getPositions().values().parallelStream()//
+            .map(this::getPriceOfPosition)//
+            .mapToDouble(e -> e.orElse(0d)).sum();
+   }
 
    public boolean hasUnresolvedPositions() {
-      return hasUnresolvedPositions;
+      return portfolioState.getPositions().values().parallelStream()//
+            .anyMatch(pos -> getPricePerShare(pos.getSymbol()).isEmpty());
    }
 
    public List<Position> unresolvedPositions() {
-      Position[] unresolved = pricesPerPosition//
-            .entrySet().stream()//
-            .filter(e -> e.getValue().isNaN())//
-            .map(Entry::getKey)//
-            .toArray(Position[]::new);
-      return Arrays.asList(unresolved);
+      return ImmutableList.copyOf(portfolioState.getPositions().values().parallelStream()//
+            .filter(pos -> getPricePerShare(pos.getSymbol()).isEmpty())//
+            .toArray(Position[]::new));
    }
 
-//   public PortfolioWorthProto toProto() {
-//      Instant inst = timestamp.toInstant();
-//      PortfolioWorthProto.Builder b = PortfolioWorthProto.newBuilder();
-//      b.getTimestampBuilder().setSeconds(inst.getEpochSecond()).setNanos(inst.getNano());
-//      for (Entry<Position, Double> e : pricesPerPosition.entrySet()) {
-//         PositionWithWorthProto.Builder pos = b.addPositionBuilder();
-//         pos.setPosition(e.getKey().toProto());
-//         if (!e.getValue().isNaN()) {
-//            pos.getWorthBuilder().setValue(e.getValue());
-//         }
-//      }
-//      b.setCash(cash);
-//      return b.build();
-//   }
+   public PortfolioWorthProto toProto() {
+      PortfolioWorthProto.Builder bldr = PortfolioWorthProto.newBuilder();
+      bldr.setPortfolioState(portfolioState.toProto());
+      pricesPerShare.forEach((symbol, price) -> {
+         bldr.addPricesBuilder()//
+               .setSymbol(symbol).setPricePerShare(DoubleValue.of(price));
+      });
+      return bldr.build();
+   }
 
    @Override
    public double byteSize() {
@@ -123,8 +104,36 @@ public class PortfolioWorth implements ISizeable {
    }
 
    protected double computeByteSize() {
-      return (double) (ISizeable.sum(pricesPerPosition.keySet().stream())
-            + (pricesPerPosition.size() * Sizes.DOUBLE) + Sizes.ZONED_DATE_TIME + Sizes.DOUBLE
-            + Sizes.DOUBLE + Sizes.BOOLEAN);
+      return (double) (ISizeable.sum(pricesPerShare.keySet().stream().map(SizeableString::new))
+            + (pricesPerShare.size() * Sizes.DOUBLE));
+   }
+
+   @Override
+   public String toString() {
+      double totalWorth = getTotalWorth();
+      double cash = getPortfolioState().getCash();
+      Tabler positionTable = new Tabler();
+      positionTable.name("Portfolio Worth");
+      positionTable.setDefaultPrecision(2);
+      positionTable.headers("Symbol", "Qty", "$ Per Share", "$ Total", "Dates");
+      for (Position pos : getPortfolioState().getPositions().values()) {
+         LinkedHashMap<LocalDate, Integer> datesMap = new LinkedHashMap<>();
+         for (PositionShareData data : pos.getShares()) {
+            datesMap.merge(data.getPurchaseDate().marketDate(), 1,
+                  (a, b) -> a.intValue() + b.intValue());
+         }
+
+         String symbol = pos.getSymbol();
+         int qty = pos.getSharesCount();
+         double perShare = getPricePerShare(pos.getSymbol()).orElse(Double.NaN);
+         double total = getPriceOfPosition(pos).orElse(Double.NaN);
+         String dates = datesMap.entrySet().stream().map(e -> e.getKey() + "[" + e.getValue() + "]")
+               .collect(Collectors.joining(", "));
+         positionTable.row(symbol, qty, perShare, total, dates);
+      }
+
+      positionTable.row("CASH", "", "", cash, "");
+      positionTable.row("WORTH", "", "", totalWorth, "");
+      return positionTable.toString();
    }
 }

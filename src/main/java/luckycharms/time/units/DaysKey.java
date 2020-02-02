@@ -10,6 +10,7 @@ import com.google.common.base.Converter;
 import luckycharms.time.IntervalDefinition;
 import luckycharms.time.IntervalDefinition.DaysDefinition;
 import luckycharms.time.MarketTimeUtils;
+import luckycharms.time.TimeFormats;
 
 public class DaysKey extends ATimeInterval<DaysKey> {
    public static final DaysDefinition INTERVAL = IntervalDefinition.DAYS;
@@ -44,7 +45,7 @@ public class DaysKey extends ATimeInterval<DaysKey> {
       } catch (NumberFormatException e) {
          // ignore
       }
-      return of(ZonedDateTime.parse(parse));
+      return of(TimeFormats.parse(parse));
    }
 
    private DaysKey(long index) {

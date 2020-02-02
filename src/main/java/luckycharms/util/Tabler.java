@@ -17,12 +17,26 @@ public class Tabler {
    private int defaultPrecision = PRECISION;
    private final List<Object> headers = new ArrayList<>();
    private final List<List<Object>> rows = new ArrayList<>();
-   private final List<Integer> precision = new ArrayList<>();
+   private final ArrayList<Integer> precision = new ArrayList<>();
 
    public Tabler() {}
 
    public Tabler name(String name) {
       this.name = name;
+      return this;
+   }
+
+   public Tabler setDefaultPrecision(int defaultPrecision) {
+      this.defaultPrecision = defaultPrecision;
+      return this;
+   }
+
+   public Tabler precision(int... setPrecision) {
+      precision.clear();
+      precision.ensureCapacity(setPrecision.length);
+      for (int v : setPrecision) {
+         precision.add(v);
+      }
       return this;
    }
 
@@ -118,7 +132,7 @@ public class Tabler {
                   .toPlainString();
          } else if (obj instanceof Double || obj instanceof Float) {
             double val = ((Number) obj).doubleValue();
-            txt = format(val, getPrecision(col));
+            txt = DecimalFormat.format(val, getPrecision(col));
          } else {
             txt = obj.toString();
          }
@@ -127,30 +141,6 @@ public class Tabler {
       for (int col = row.size(); col < columns; col++) {
          out[col + offset] = "";
       }
-   }
-
-   private String format(double v, int scale) {
-      long a;
-      switch (scale) {
-      case 0:
-         return Long.toString(Math.round(v));
-      case 1:
-         a = Math.round(v * 10);
-         break;
-      case 2:
-         a = Math.round(v * 100);
-         break;
-      case 3:
-         a = Math.round(v * 1000);
-         break;
-      default:
-         a = Math.round(v * Math.pow(10, scale));
-         break;
-      }
-      StringBuilder b = new StringBuilder();
-      b.append(a);
-      b.insert(b.length() - scale, '.');
-      return b.toString();
    }
 
    private int getPrecision(int col) {

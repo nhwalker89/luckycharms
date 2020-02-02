@@ -1,6 +1,7 @@
 package luckycharms.guis;
 
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -39,11 +40,39 @@ public class LuckyCharmsRoot extends VBox {
 
    private void createViewerContents(Menu viewers) {
       MenuItem marketDays = new MenuItem("MarketDays");
-      marketDays.setOnAction(e -> {
-         content.getChildren()
-               .setAll(new DataSetViewerPage<>(MarketDayDataSet.instance().pagedDataSet()));
-      });
+      marketDays.setOnAction(e -> change(new DataSetViewerPage<>(//
+            MarketDayDataSet.instance().toString(), //
+            MarketDayDataSet.instance().pagedDataSet())));
       viewers.getItems().add(marketDays);
+
+      MenuItem stockDailyPrices = new MenuItem("StockDailyPrices");
+      stockDailyPrices.setOnAction(e -> changeToStocks());
+      viewers.getItems().add(stockDailyPrices);
+//
+//      SortedSetMultimap<String, String> groupedSymbols = MultimapBuilder.treeKeys().treeSetValues()
+//            .build();
+//      for (String symbol : StockUniverse.SP500) {
+//         groupedSymbols.put(symbol.substring(0, 1), symbol);
+//      }
+//      for (String groupKey : groupedSymbols.keySet()) {
+//         Menu datasets = new Menu("Daily Prices[" + groupKey + "]");
+//
+//         for (String symbol : groupedSymbols.get(groupKey)) {
+//            DailyPriceDataSet ds = DailyPriceDataSet.instance(symbol);
+//            MenuItem item = new MenuItem(symbol);
+//            datasets.getItems().add(item);
+//            item.setOnAction(e -> change(ds.pagedDataSet()));
+//         }
+//         viewers.getItems().add(datasets);
+//      }
+   }
+
+   private void change(Node node) {
+      content.getChildren().setAll(node);
+   }
+
+   private void changeToStocks() {
+      content.getChildren().setAll(new StockDataSetViewerPage());
    }
 
 }

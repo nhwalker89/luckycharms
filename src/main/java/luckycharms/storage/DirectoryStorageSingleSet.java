@@ -1,10 +1,13 @@
 package luckycharms.storage;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
+
+import org.apache.commons.io.FileUtils;
 
 public class DirectoryStorageSingleSet implements IStorage {
    private static final org.slf4j.Logger sLog = org.slf4j.LoggerFactory
@@ -84,4 +87,20 @@ public class DirectoryStorageSingleSet implements IStorage {
       return new DataSetIndex();
    }
 
+   @Override
+   public void clear() throws IOException {
+      File file = directory.toFile();
+      for (File children : file.listFiles()) {
+         if (children.isDirectory()) {
+            FileUtils.deleteDirectory(file);
+         } else {
+            children.delete();
+         }
+
+      }
+      file.mkdirs();
+      if (!file.exists()) {
+         throw new IOException("Failed to setup storage directory " + directory);
+      }
+   }
 }

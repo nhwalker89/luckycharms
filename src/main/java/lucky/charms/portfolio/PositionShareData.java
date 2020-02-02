@@ -2,6 +2,7 @@ package lucky.charms.portfolio;
 
 import java.util.Objects;
 
+import luckycharms.protos.portfolio.PositionShareDataProto;
 import luckycharms.time.units.DaysKey;
 import luckycharms.util.sizeable.ISizeable;
 
@@ -10,12 +11,12 @@ public class PositionShareData implements Comparable<PositionShareData>, ISizeab
    private final DaysKey purchaseDate;
 
    public PositionShareData(DaysKey purchaseDate) {
-      this.purchaseDate = purchaseDate;
+      this.purchaseDate = Objects.requireNonNull(purchaseDate);
    }
 
-//   public PositionShareData(PositionShareDataProto proto) {
-//      this.purchaseDate = DaysKey.of(proto.getPurchaseDate().getIndex());
-//   }
+   public PositionShareData(PositionShareDataProto proto) {
+      this.purchaseDate = DaysKey.of(proto.getPurchaseDate().getIndex());
+   }
 
    @Override
    public double byteSize() {
@@ -49,9 +50,9 @@ public class PositionShareData implements Comparable<PositionShareData>, ISizeab
       return Objects.equals(purchaseDate, other.purchaseDate);
    }
 
-//   public PositionShareDataProto toProto() {
-//      return PositionShareDataProto.newBuilder().setPurchaseDate(purchaseDate.toProto()).build();
-//   }
+   public PositionShareDataProto toProto() {
+      return PositionShareDataProto.newBuilder().setPurchaseDate(purchaseDate.toProto()).build();
+   }
 
    @Override
    public String toString() {

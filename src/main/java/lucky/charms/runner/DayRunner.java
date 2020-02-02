@@ -1,6 +1,7 @@
 package lucky.charms.runner;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -10,8 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
 
-import lucky.charms.clock.Clock;
-import lucky.charms.clock.ClockException;
+import lucky.charms.clock.MarketTimeStateData;
 import lucky.charms.portfolio.Portfolio;
 import lucky.charms.portfolio.PortfolioState;
 import lucky.charms.portfolio.PortfolioWorth;
@@ -19,23 +19,24 @@ import lucky.charms.portfolio.Position;
 import lucky.charms.portfolio.PositionShareData;
 import lucky.charms.runner.log.DailyRunLog;
 import lucky.charms.runner.log.RunLog;
+import lucky.charms.runner.log.RunLog.LoggerBasedRunLog;
 
 public class DayRunner {
    private final org.slf4j.Logger sLog = org.slf4j.LoggerFactory.getLogger(this.getClass());
 
    private final AtomicBoolean isRunning = new AtomicBoolean(false);
-   private final RunnerContext context;
+   private final IRunnerContext context;
    private final IPicker picker;
    private final Portfolio portfolio;
 
-   private RunLog runLog = null/* TODO */;
+   private RunLog runLog = new LoggerBasedRunLog();;
    private double reserveAmount = 200.0;
    private Duration delay = Duration.ofMinutes(45);
    private int daysToHold = 3;
 
    private DailyRunLog dailyLog = null;
 
-   public DayRunner(RunnerContext context, IPicker picker, Portfolio portfolio) {
+   public DayRunner(IRunnerContext context, IPicker picker, Portfolio portfolio) {
       this.context = context;
       this.picker = picker;
       this.portfolio = portfolio;
@@ -82,20 +83,38 @@ public class DayRunner {
    }
 
    protected void beforeDailyExecution() {
-      picker.beforeDailyExecution();
+      picker.beforeDailyExecution(context);
    }
 
    protected void waitForStartTime() {
       boolean alive = true;
       while (alive) {
          try {
-            if (clock().isBeforeMiddleOfValidTradingDay()) {
-               clock().waitUntil(clock().nextMarketOpen().plus(delay));
-               clock().waitForMarketOpen();
+
+            // Wait until market open
+            MarketTimeStateData data = context.clock().marketTimeState();
+            if (data.isOpen() && data.isBeforeMiddleOfValidTradingDay()) {
+               // Success !
+            } else if (data.isOpen()) {
+               context.clock().waitUntilMarketClose();
+               context.clock().waitUntilOpen();
+               data = context.clock().marketTimeState();
+            } else {
+               context.clock().waitUntilOpen();
+               data = context.clock().marketTimeState();
             }
 
+            // Wait until desired time has elapsed
+            if (data.isOpen()) {
+               ZonedDateTime target = data.lastMarketStateChange().plus(delay);
+               context.clock().waitUntil(target);
+            } else {
+               sLog.error("Problem while waiting for market to open,"
+                     + " expected open state but was closed");
+            }
             alive = false;
-         } catch (InterruptedException | ClockException e) {
+
+         } catch (InterruptedException e) {
             sLog.error("Problem waiting for market to open", e);
             alive = isRobust();
          }
@@ -106,9 +125,9 @@ public class DayRunner {
       boolean alive = true;
       while (alive) {
          try {
-            clock().waitForMarketClose();
+            context.clock().waitUntilMarketClose();
             alive = false;
-         } catch (InterruptedException | ClockException e) {
+         } catch (InterruptedException e) {
             sLog.error("Problem waiting for market to open", e);
             alive = isRobust();
          }
@@ -117,14 +136,17 @@ public class DayRunner {
 
    protected void afterMarketCloses() {
       PortfolioState state = portfolio.getState();
-      PortfolioWorth worth = portfolio.getWorth();
+      PortfolioWorth worth = portfolio.getWorth(context);
       dailyLog.logEndOfDayPortfolio(state, worth);
+      dailyLog.dayEnded();
    }
 
    protected void beforeDailyActions() {
-      dailyLog = runLog.createDailyRunLog(context.today());
+      dailyLog = runLog.createDailyRunLog(context);
+      dailyLog.dayStarted();
+
       PortfolioState state = portfolio.getState();
-      PortfolioWorth worth = portfolio.getWorth();
+      PortfolioWorth worth = portfolio.getWorth(context);
       dailyLog.logStartOfDayPortfolio(state, worth);
    }
 
@@ -139,8 +161,8 @@ public class DayRunner {
       dailyLog.logStocksToSell(toSell);
 
       // Sell - wait at most 1/2 hour for pending sells to finalize
-      portfolio.sell(toSell);
-      Duration timeWaited = portfolio.waitForPendingSells(Duration.ofMinutes(30));
+      portfolio.sell(context, toSell);
+      Duration timeWaited = portfolio.waitForPendingSells(context, Duration.ofMinutes(30));
       dailyLog.logTimeWaitedForBulkSell(timeWaited);
 
       // Determine what to buy
@@ -148,12 +170,12 @@ public class DayRunner {
       dailyLog.logStocksToBuy(toBuy);
 
       // Submit buy orders - wait at most 1/2 hour for pending buys to finalize
-      portfolio.buy(toBuy);
-      timeWaited = portfolio.waitForPendingBuys(Duration.ofMinutes(30));
+      portfolio.buy(context, toBuy);
+      timeWaited = portfolio.waitForPendingBuys(context, Duration.ofMinutes(30));
       dailyLog.logTimeWaitedForBulkBuy(timeWaited);
 
       // Use remaining money to buy extra shares
-      double cash = portfolio.getWorth().getCash();
+      double cash = portfolio.getWorth(context).getPortfolioState().getCash();
       boolean madeExtraBuy = true;
       while (madeExtraBuy) {
          madeExtraBuy = false;
@@ -168,10 +190,10 @@ public class DayRunner {
 
             if (priceDoub < cash) {
                dailyLog.logExtraBuy(symbol);
-               portfolio.buy(Collections.singletonMap(symbol, 1));
-               timeWaited = portfolio.waitForPendingBuys(Duration.ofMinutes(15));
+               portfolio.buy(context, Collections.singletonMap(symbol, 1));
+               timeWaited = portfolio.waitForPendingBuys(context, Duration.ofMinutes(15));
                dailyLog.logTimeWaitedForExtraBuy(timeWaited);
-               cash = portfolio.getWorth().getCash();
+               cash = portfolio.getWorth(context).getPortfolioState().getCash();
                madeExtraBuy = true;
             }
          }
@@ -182,12 +204,12 @@ public class DayRunner {
    private Map<String, Integer> determineWhatToBuy(List<String> picks) {
       Map<String, Integer> toBuy = new HashMap<>();
 
-      PortfolioWorth worth = portfolio.getWorth();
+      PortfolioWorth worth = portfolio.getWorth(context);
       PortfolioState state = portfolio.getState();
       Map<String, Double> currentPrices = context.currentPrices(picks.iterator());
 
       double amountPerSymbol = (worth.getTotalWorth() - reserveAmount) / picks.size();
-      double availCash = worth.getCash() - reserveAmount;
+      double availCash = worth.getPortfolioState().getCash() - reserveAmount;
 
       for (String symbol : picks) {
 
@@ -230,21 +252,17 @@ public class DayRunner {
    private Map<String, Integer> determineWhatToSell(List<String> picks) {
       PortfolioState state = portfolio.getState();
       Map<String, Integer> toSell = new HashMap<>();
-      for (Position position : state.getPositions()) {
+      for (Position position : state.getPositions().values()) {
          String symbol = position.getSymbol();
          if (!picks.contains(symbol)) {
-            List<PositionShareData> positionsToSell = position
-                  .getShares(Range.atMost(context.today().minus(daysToHold)));
+            List<PositionShareData> positionsToSell = position.getShares(
+                  Range.atMost(context.clock().marketTimeState().today().minus(daysToHold)));
             if (!positionsToSell.isEmpty()) {
                toSell.put(symbol, positionsToSell.size());
             }
          }
       }
       return toSell;
-   }
-
-   protected Clock clock() {
-      return context.clock();
    }
 
    protected boolean isRobust() { return context.isRobust(); }
