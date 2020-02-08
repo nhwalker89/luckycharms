@@ -1,12 +1,14 @@
 package luckycharms.time.units;
 
 import java.time.ZonedDateTime;
+import java.util.OptionalLong;
 
 import com.google.common.base.Converter;
 
 import luckycharms.time.IntervalDefinition;
 import luckycharms.time.IntervalDefinition.DurationBasedDefinition;
 import luckycharms.time.MarketTimeUtils;
+import luckycharms.time.TimeFormats;
 
 public class FifteenMinutesKey extends ATimeInterval<FifteenMinutesKey> {
    public static final DurationBasedDefinition INTERVAL = IntervalDefinition.FIFTEEN_MINUTES;
@@ -29,13 +31,11 @@ public class FifteenMinutesKey extends ATimeInterval<FifteenMinutesKey> {
    }
 
    public static FifteenMinutesKey parse(String parse) {
-      try {
-         long index = Long.parseLong(parse);
-         return of(index);
-      } catch (NumberFormatException e) {
-         // ignore
+      OptionalLong index = tryParseLong(parse);
+      if (index.isPresent()) {
+         return of(index.getAsLong());
       }
-      return of(ZonedDateTime.parse(parse));
+      return of(TimeFormats.parse(parse));
    }
 
    private FifteenMinutesKey(long index) {

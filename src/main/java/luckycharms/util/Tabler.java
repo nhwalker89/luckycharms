@@ -132,7 +132,7 @@ public class Tabler {
                   .toPlainString();
          } else if (obj instanceof Double || obj instanceof Float) {
             double val = ((Number) obj).doubleValue();
-            txt = DecimalFormat.format(val, getPrecision(col));
+            txt = DecimalFormatter.format(val, getPrecision(col));
          } else {
             txt = obj.toString();
          }

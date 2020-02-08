@@ -20,6 +20,8 @@ import lucky.charms.portfolio.PositionShareData;
 import lucky.charms.runner.log.DailyRunLog;
 import lucky.charms.runner.log.RunLog;
 import lucky.charms.runner.log.RunLog.LoggerBasedRunLog;
+import luckycharms.util.progress.ProgressGui;
+import luckycharms.util.progress.ProgressManager;
 
 public class DayRunner {
    private final org.slf4j.Logger sLog = org.slf4j.LoggerFactory.getLogger(this.getClass());
@@ -57,6 +59,8 @@ public class DayRunner {
 
       prepareToRun();
 
+      ProgressGui<ProgressManager> gui = ProgressGui.openPopup("DayRunner", true);
+      gui.getProgressManager().setProgress("Initializing", 0.0f);
       while (isRunning()) {
 
          if (isRunning())
@@ -75,6 +79,15 @@ public class DayRunner {
 
          if (isRunning())
             afterMarketCloses();
+
+         context.clock().percentRemaining().ifPresent(val -> {
+            gui.getProgressManager().setProgress(
+                  context.clock().marketTimeState().today() + " Finished", (float) val);
+         });
+
+         if (!context.clock().hasMoreDays()) {
+            isRunning.set(false);
+         }
       }
    }
 
@@ -175,9 +188,10 @@ public class DayRunner {
       dailyLog.logTimeWaitedForBulkBuy(timeWaited);
 
       // Use remaining money to buy extra shares
-      double cash = portfolio.getWorth(context).getPortfolioState().getCash();
-      boolean madeExtraBuy = true;
-      while (madeExtraBuy) {
+      double availableBalance = portfolio.getWorth(context).getPortfolioState().getCash()
+            - reserveAmount;
+      boolean madeExtraBuy;
+      do {
          madeExtraBuy = false;
          for (String symbol : picks) {
             Map<String, Double> currentPrice = context
@@ -188,16 +202,17 @@ public class DayRunner {
             }
             double priceDoub = price.doubleValue();
 
-            if (priceDoub < cash) {
+            if (priceDoub < availableBalance) {
                dailyLog.logExtraBuy(symbol);
                portfolio.buy(context, Collections.singletonMap(symbol, 1));
                timeWaited = portfolio.waitForPendingBuys(context, Duration.ofMinutes(15));
                dailyLog.logTimeWaitedForExtraBuy(timeWaited);
-               cash = portfolio.getWorth(context).getPortfolioState().getCash();
+               availableBalance = portfolio.getWorth(context).getPortfolioState().getCash()
+                     - reserveAmount;
                madeExtraBuy = true;
             }
          }
-      }
+      } while (madeExtraBuy);
 
    }
 
@@ -242,8 +257,10 @@ public class DayRunner {
                shares = Math.toIntExact((long) (availCash / symbolPrice.doubleValue()));
                cost = shares * symbolPrice.doubleValue();
             }
-            toBuy.put(symbol, shares);
-            availCash = availCash - cost;
+            if (shares > 0) {
+               toBuy.put(symbol, shares);
+               availCash = availCash - cost;
+            }
          }
       }
       return toBuy;

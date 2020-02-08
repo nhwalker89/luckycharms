@@ -74,7 +74,7 @@ public class PortfolioWorth implements ISizeable {
    public double getTotalWorth() {
       return portfolioState.getPositions().values().parallelStream()//
             .map(this::getPriceOfPosition)//
-            .mapToDouble(e -> e.orElse(0d)).sum();
+            .mapToDouble(e -> e.orElse(0d)).sum() + portfolioState.getCash();
    }
 
    public boolean hasUnresolvedPositions() {
@@ -128,7 +128,10 @@ public class PortfolioWorth implements ISizeable {
          double perShare = getPricePerShare(pos.getSymbol()).orElse(Double.NaN);
          double total = getPriceOfPosition(pos).orElse(Double.NaN);
          String dates = datesMap.entrySet().stream().map(e -> e.getKey() + "[" + e.getValue() + "]")
-               .collect(Collectors.joining(", "));
+               .limit(5).collect(Collectors.joining(", "));
+         if (datesMap.entrySet().size() > 5) {
+            dates = dates + "...";
+         }
          positionTable.row(symbol, qty, perShare, total, dates);
       }
 

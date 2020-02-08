@@ -31,6 +31,16 @@ import luckycharms.util.progress.ProgressGui;
 public class DailyPriceDataSet extends SortedPagedDataSet<DaysKey, PriceBar, MonthsKey> {
 
    public static void main(String[] args) {
+      System.out.println("Clearing");
+      StockUniverse.SP500.parallelStream().forEach(e -> {
+         try {
+            instance(e).clear();
+         } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+         }
+      });
+
       System.out.println("Running Daily Data Update");
 
       try {
@@ -96,6 +106,22 @@ public class DailyPriceDataSet extends SortedPagedDataSet<DaysKey, PriceBar, Mon
    }
 
    public String getSymbol() { return symbol; }
+
+   public KeyValuePair<DaysKey, PriceBar> getLastFullPriceBar(DaysKey target) {
+      PriceBar bar = get(target);
+      if (bar != null && bar.isFullyDefined()) {
+         return new KeyValuePair<DaysKey, PriceBar>(target, bar);
+      }
+      DaysKey newTarget;
+      for (int i = 1; bar == null & i <= 10; i++) {
+         newTarget = target.minus(i);
+         bar = get(newTarget);
+         if (bar != null && bar.isFullyDefined()) {
+            return new KeyValuePair<DaysKey, PriceBar>(newTarget, bar);
+         }
+      }
+      return null;
+   }
 
    private static void fetchByDataSet(Set<DailyPriceDataSet> datasets, DaysKey start, DaysKey end)
          throws IOException {

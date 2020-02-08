@@ -1,19 +1,22 @@
 package luckycharms.time.units;
 
 import java.time.ZonedDateTime;
+import java.util.OptionalLong;
 
 import com.google.common.base.Converter;
 
 import luckycharms.time.IntervalDefinition;
 import luckycharms.time.IntervalDefinition.DurationBasedDefinition;
 import luckycharms.time.MarketTimeUtils;
+import luckycharms.time.TimeFormats;
 
 public class HoursKey extends ATimeInterval<HoursKey> {
    public static final DurationBasedDefinition INTERVAL = IntervalDefinition.HOURS;
 
    public static final Converter<HoursKey, String> FORMAT = //
          Converter.from(HoursKey::toString, HoursKey::parse);
-   public static final Converter<HoursKey, byte[]> BYTE_FORMAT = new TimeIntervalToBytes<>(HoursKey::of);
+   public static final Converter<HoursKey, byte[]> BYTE_FORMAT = new TimeIntervalToBytes<>(
+         HoursKey::of);
 
    public static HoursKey of(long hours) {
       return new HoursKey(hours);
@@ -28,13 +31,11 @@ public class HoursKey extends ATimeInterval<HoursKey> {
    }
 
    public static HoursKey parse(String parse) {
-      try {
-         long index = Long.parseLong(parse);
-         return of(index);
-      } catch (NumberFormatException e) {
-         // ignore
+      OptionalLong index = tryParseLong(parse);
+      if (index.isPresent()) {
+         return of(index.getAsLong());
       }
-      return of(ZonedDateTime.parse(parse));
+      return of(TimeFormats.parse(parse));
    }
 
    private HoursKey(long index) {

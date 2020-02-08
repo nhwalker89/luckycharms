@@ -3,8 +3,7 @@
 	packages="luckycharms.logging.plugins">
 	<Properties>
 		<Property name="basePath">./logs</Property>
-		<Property name="baseFormat">[%-5level] %d{DEFAULT}{America/New_York} [%t]
-			%c{-1}%notEmpty{[%marker]} - %msg%n%xEx</Property>
+		<Property name="baseFormat">[%-5level] %d{DEFAULT}{America/New_York} [%t]%c{-1}%notEmpty{[%marker]} - %msg%n%xEx</Property>
 	</Properties>
 
 	<Appenders>
@@ -21,7 +20,7 @@
 				<OnStartupTriggeringPolicy />
 				<TimeBasedTriggeringPolicy interval="1" />
 			</Policies>
-			<DefaultRolloverStrategy max="20" />
+			<DefaultRolloverStrategy max="3" />
 		</RollingRandomAccessFile>
 
       <Async name="async_rest_log">
@@ -39,7 +38,7 @@
 				<OnStartupTriggeringPolicy />
 				<TimeBasedTriggeringPolicy interval="1" />
 			</Policies>
-			<DefaultRolloverStrategy max="20" />
+			<DefaultRolloverStrategy max="3" />
 		</RollingRandomAccessFile>
 
 		<Console name="console" target="SYSTEM_OUT">

@@ -16,7 +16,7 @@ public class MarketTimeStateData {
    enum OpenState {
       BEFORE_TODAYS_OPEN, //
       OPEN {
-         public boolean isOpen() { return false; }
+         public boolean isOpen() { return true; }
       }, //
       AFTER_TODAYS_CLOSED, //
       NOT_OPEN_TODAY;
@@ -79,7 +79,7 @@ public class MarketTimeStateData {
       DaysKey key = day.minus(1);
       MarketDayData data = null;
       for (int i = 0; data == null && i < 20; i++) {
-         data = MarketDayDataSet.instance().get(day);
+         data = MarketDayDataSet.instance().get(key);
          if (data != null && !data.validMarketDay()) {
             data = null;
          }
@@ -95,7 +95,7 @@ public class MarketTimeStateData {
       DaysKey key = day.plus(1);
       MarketDayData data = null;
       for (int i = 0; data == null && i < 20; i++) {
-         data = MarketDayDataSet.instance().get(day);
+         data = MarketDayDataSet.instance().get(key);
          if (data != null && !data.validMarketDay()) {
             data = null;
          }

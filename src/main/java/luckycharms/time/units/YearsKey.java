@@ -1,6 +1,7 @@
 package luckycharms.time.units;
 
 import java.time.ZonedDateTime;
+import java.util.OptionalLong;
 
 import com.google.common.base.Converter;
 
@@ -46,11 +47,9 @@ public class YearsKey extends ATimeInterval<YearsKey> {
    }
 
    public static YearsKey parse(String parse) {
-      try {
-         long index = Long.parseLong(parse);
-         return of(index);
-      } catch (NumberFormatException e) {
-         // ignore
+      OptionalLong index = tryParseLong(parse);
+      if (index.isPresent()) {
+         return of(index.getAsLong());
       }
       return of(TimeFormats.parse(parse));
    }

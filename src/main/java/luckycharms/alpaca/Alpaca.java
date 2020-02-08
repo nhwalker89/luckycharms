@@ -33,7 +33,6 @@ import luckycharms.rest.RestResponse;
 import luckycharms.rest.UriBuilder;
 import luckycharms.storage.KeyValuePair;
 import luckycharms.time.units.DaysKey;
-import luckycharms.time.units.SecondsKey;
 import luckycharms.util.progress.CountingProgressManager;
 import luckycharms.util.progress.ProgressGui;
 
@@ -222,23 +221,49 @@ public class Alpaca {
                         sRequestLog.error("Daily Bar Point was missing timestamp");
                         stdLog.error("Daily Bar Point was missing timestamp");
                      } else {
-                        DaysKey dayKey = SecondsKey.of(barJson.timestamp.longValue()).asDaysKey();
+                        DaysKey dayKey = barJson.getTimestamp().asDaysKey();
                         if (dayKey.compareTo(start) >= 0 && dayKey.compareTo(end) <= 0) {
                            PriceBarProto.Builder bld = PriceBarProto.newBuilder();
                            if (barJson.close != null) {
-                              bld.getCloseBuilder().setValue(barJson.close);
+                              if (barJson.getClose() < 0) {
+                                 stdLog.error("Negative value {} - {}", pointJson.getKey(),
+                                       barJson);
+                              } else {
+                                 bld.getCloseBuilder().setValue(barJson.getClose());
+                              }
                            }
                            if (barJson.open != null) {
-                              bld.getOpenBuilder().setValue(barJson.open);
+                              if (barJson.getOpen().doubleValue() < 0) {
+                                 stdLog.error("Negative value {} - {}", pointJson.getKey(),
+                                       barJson);
+                              } else {
+                                 bld.getOpenBuilder().setValue(barJson.getOpen());
+                              }
                            }
                            if (barJson.high != null) {
-                              bld.getHighBuilder().setValue(barJson.high);
+                              if (barJson.getHigh() < 0) {
+                                 stdLog.error("Negative value {} - {}", pointJson.getKey(),
+                                       barJson);
+
+                              } else {
+                                 bld.getHighBuilder().setValue(barJson.getHigh());
+                              }
                            }
                            if (barJson.low != null) {
-                              bld.getLowBuilder().setValue(barJson.low);
+                              if (barJson.getLow() < 0) {
+                                 stdLog.error("Negative value {} - {}", pointJson.getKey(),
+                                       barJson);
+                              } else {
+                                 bld.getLowBuilder().setValue(barJson.getLow());
+                              }
                            }
                            if (barJson.volume != null) {
-                              bld.getVolumeBuilder().setValue(barJson.volume);
+                              if (barJson.getVolume() < 0) {
+                                 stdLog.error("Negative value {} - {}", pointJson.getKey(),
+                                       barJson);
+                              } else {
+                                 bld.getVolumeBuilder().setValue(barJson.getVolume());
+                              }
                            }
                            bars.add(new KeyValuePair<>(dayKey, new PriceBar(bld.build())));
                         } else {

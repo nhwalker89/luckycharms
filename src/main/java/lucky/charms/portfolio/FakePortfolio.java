@@ -29,6 +29,10 @@ public class FakePortfolio implements Portfolio {
    @Override
    public PortfolioState getState() { return state; }
 
+   public synchronized void addCash(double cash) {
+      state = state.updateCash(state.getCash() + cash);
+   }
+
    @Override
    public synchronized void sell(IRunnerContext ctx, Map<String, Integer> toSell) {
       Map<String, Double> prices = ctx.currentPrices(toSell.keySet().iterator());

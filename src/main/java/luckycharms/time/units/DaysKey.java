@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.OptionalLong;
 
 import com.google.common.base.Converter;
 
@@ -39,13 +40,12 @@ public class DaysKey extends ATimeInterval<DaysKey> {
    }
 
    public static DaysKey parse(String parse) {
-      try {
-         long index = Long.parseLong(parse);
-         return of(index);
-      } catch (NumberFormatException e) {
-         // ignore
+      OptionalLong index = tryParseLong(parse);
+      if (index.isPresent()) {
+         return of(index.getAsLong());
       }
       return of(TimeFormats.parse(parse));
+
    }
 
    private DaysKey(long index) {

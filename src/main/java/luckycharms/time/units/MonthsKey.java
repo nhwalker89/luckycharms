@@ -2,6 +2,7 @@ package luckycharms.time.units;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.OptionalLong;
 
 import com.google.common.base.Converter;
 
@@ -45,11 +46,9 @@ public class MonthsKey extends ATimeInterval<MonthsKey> {
    }
 
    public static MonthsKey parse(String parse) {
-      try {
-         long index = Long.parseLong(parse);
-         return of(index);
-      } catch (NumberFormatException e) {
-         // ignore
+      OptionalLong index = tryParseLong(parse);
+      if (index.isPresent()) {
+         return of(index.getAsLong());
       }
       return of(TimeFormats.parse(parse));
    }

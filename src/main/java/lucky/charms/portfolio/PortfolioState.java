@@ -69,9 +69,10 @@ public class PortfolioState implements ISizeable {
                throw new IllegalArgumentException("Cannot remove " //
                      + entry.getValue().intValue() + " from "//
                      + oldShares + " shares of symbol " + entry.getValue());
-            }
-            if (count > 0) {
+            } else if (count > 0) {
                values.put(entry.getKey(), oldPos.updateQty(count, null));
+            } else {
+               values.remove(entry.getKey());
             }
 
          }

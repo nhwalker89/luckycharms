@@ -4,6 +4,7 @@ import java.io.UncheckedIOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.util.OptionalLong;
 import java.util.function.LongFunction;
 
 import com.google.common.base.Converter;
@@ -128,5 +129,63 @@ public abstract class ATimeInterval<X extends ATimeInterval<X>>
    @Override
    public double byteSize() {
       return Sizes.TIME_INTERVAL;
+   }
+
+   protected static OptionalLong tryParseLong(String s) {
+      return tryParse(s, 10);
+   }
+
+   protected static OptionalLong tryParse(String s, int radix) {
+
+      if (s == null) {
+         return OptionalLong.empty();
+      }
+
+      if (radix < Character.MIN_RADIX) {
+         return OptionalLong.empty();
+      }
+      if (radix > Character.MAX_RADIX) {
+         return OptionalLong.empty();
+      }
+
+      boolean negative = false;
+      int i = 0, len = s.length();
+      long limit = -Long.MAX_VALUE;
+
+      if (len > 0) {
+         char firstChar = s.charAt(0);
+         if (firstChar < '0') { // Possible leading "+" or "-"
+            if (firstChar == '-') {
+               negative = true;
+               limit = Long.MIN_VALUE;
+            } else if (firstChar != '+') {
+               return OptionalLong.empty();
+            }
+
+            if (len == 1) { // Cannot have lone "+" or "-"
+               return OptionalLong.empty();
+            }
+            i++;
+         }
+         long multmin = limit / radix;
+         long result = 0;
+         while (i < len) {
+            // Accumulating negatively avoids surprises near MAX_VALUE
+            int digit = Character.digit(s.charAt(i++), radix);
+            if (digit < 0 || result < multmin) {
+               return OptionalLong.empty();
+            }
+            result *= radix;
+            if (result < limit + digit) {
+               return OptionalLong.empty();
+            }
+            result -= digit;
+         }
+
+         return OptionalLong.of(negative ? result : -result);
+      } else {
+         return OptionalLong.empty();
+      }
+
    }
 }

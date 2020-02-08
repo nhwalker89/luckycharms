@@ -1,6 +1,6 @@
 package luckycharms.util.progress;
 
-import luckycharms.util.DecimalFormat;
+import luckycharms.util.DecimalFormatter;
 
 public class Progress {
    private final float percent;
@@ -24,7 +24,7 @@ public class Progress {
    public boolean isComplete() { return !isIndeterminate() && percent >= 1f; }
 
    protected void appendPercentage(StringBuilder b) {
-      DecimalFormat.format(b, percent * 100d, 2);
+      DecimalFormatter.format(b, percent * 100d, 2);
       b.append('%');
    }
 

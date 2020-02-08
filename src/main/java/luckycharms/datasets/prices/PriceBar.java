@@ -1,5 +1,6 @@
 package luckycharms.datasets.prices;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 
 import com.google.common.base.Converter;
@@ -100,7 +101,7 @@ public class PriceBar implements ISizeable {
       builder.append(", low=");
       builder.append(low);
       builder.append(", volume=");
-      builder.append(volume);
+      builder.append(BigDecimal.valueOf(volume).toPlainString());
       builder.append("]");
       return builder.toString();
    }

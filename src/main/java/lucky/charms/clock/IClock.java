@@ -3,6 +3,7 @@ package lucky.charms.clock;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.NavigableSet;
+import java.util.OptionalDouble;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,8 @@ public interface IClock {
    void waitUntilMarketClose() throws InterruptedException;
 
    boolean hasMoreDays();
+
+   OptionalDouble percentRemaining();
 
    public static class FakeClock implements IClock {
 
@@ -114,5 +117,11 @@ public interface IClock {
          return currentDay.compareTo(end) < 0;
       }
 
+      @Override
+      public OptionalDouble percentRemaining() {
+         double span = end.index() - start.index() + 1;
+         double elapsed = currentDay.index() - start.index();
+         return OptionalDouble.of(elapsed / span);
+      }
    }
 }
