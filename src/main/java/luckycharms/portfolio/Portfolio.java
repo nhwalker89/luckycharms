@@ -1,10 +1,10 @@
-package lucky.charms.portfolio;
+package luckycharms.portfolio;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 
-import lucky.charms.runner.IRunnerContext;
+import luckycharms.runner.IRunnerContext;
 
 public interface Portfolio {
 

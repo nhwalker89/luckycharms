@@ -1,11 +1,11 @@
-package lucky.charms.runner.log;
+package luckycharms.runner.log;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-import lucky.charms.portfolio.PortfolioState;
-import lucky.charms.portfolio.PortfolioWorth;
+import luckycharms.portfolio.PortfolioState;
+import luckycharms.portfolio.PortfolioWorth;
 
 public interface DailyRunLog {
 

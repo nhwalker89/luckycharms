@@ -1,6 +1,6 @@
-package lucky.charms.runner.log;
+package luckycharms.runner.log;
 
-import lucky.charms.runner.IRunnerContext;
+import luckycharms.runner.IRunnerContext;
 
 public interface RunLog {
 

@@ -20,7 +20,7 @@ option java_package = "luckycharms.protos";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
-package lucky.charms.protos;
+package luckycharms.protos;
 
 // =====================================================================
 // =====================================================================

@@ -1,4 +1,4 @@
-package lucky.charms.portfolio;
+package luckycharms.portfolio;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableMap;
 
-import lucky.charms.runner.IRunnerContext;
 import luckycharms.protos.portfolio.PortfolioStateProto;
+import luckycharms.runner.IRunnerContext;
 import luckycharms.time.units.DaysKey;
 import luckycharms.util.ProtobufSerializer;
 import luckycharms.util.sizeable.ISizeable;

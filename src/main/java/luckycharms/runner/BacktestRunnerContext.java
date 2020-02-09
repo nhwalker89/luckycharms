@@ -1,4 +1,4 @@
-package lucky.charms.runner;
+package luckycharms.runner;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -7,8 +7,8 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
 
-import lucky.charms.clock.IClock;
-import lucky.charms.clock.MarketTimeStateData;
+import luckycharms.clock.IClock;
+import luckycharms.clock.MarketTimeStateData;
 import luckycharms.config.StockUniverse;
 import luckycharms.datasets.prices.DailyPriceDataSet;
 import luckycharms.datasets.prices.FifteenMinPriceDataSet;

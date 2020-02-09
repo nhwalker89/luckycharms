@@ -1,4 +1,4 @@
-package lucky.charms.runner;
+package luckycharms.runner;
 
 import java.util.List;
 

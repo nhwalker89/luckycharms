@@ -1,4 +1,4 @@
-package lucky.charms.portfolio;
+package luckycharms.portfolio;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import lucky.charms.runner.EPriceHint;
-import lucky.charms.runner.IRunnerContext;
+import luckycharms.runner.EPriceHint;
+import luckycharms.runner.IRunnerContext;
 
 public class FakePortfolio implements Portfolio {
    private static final org.slf4j.Logger sLog = org.slf4j.LoggerFactory

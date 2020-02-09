@@ -21,7 +21,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "lucky-charms.proto";
 
-package lucky.charms.protos.portfolio;
+package luckycharms.protos.portfolio;
 
 // =====================================================================
 // =====================================================================

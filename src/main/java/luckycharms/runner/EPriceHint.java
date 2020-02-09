@@ -1,6 +1,6 @@
-package lucky.charms.runner;
+package luckycharms.runner;
 
-import lucky.charms.clock.MarketTimeStateData;
+import luckycharms.clock.MarketTimeStateData;
 import luckycharms.datasets.prices.PriceBar;
 
 public enum EPriceHint {

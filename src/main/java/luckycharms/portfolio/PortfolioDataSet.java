@@ -1,4 +1,4 @@
-package lucky.charms.portfolio;
+package luckycharms.portfolio;
 
 import java.io.File;
 import java.util.List;

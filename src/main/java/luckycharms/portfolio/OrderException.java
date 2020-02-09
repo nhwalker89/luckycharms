@@ -1,4 +1,4 @@
-package lucky.charms.portfolio;
+package luckycharms.portfolio;
 
 public class OrderException extends Exception {
 

@@ -1,4 +1,4 @@
-package lucky.charms.clock;
+package luckycharms.clock;
 
 import java.time.LocalTime;
 import java.time.ZonedDateTime;

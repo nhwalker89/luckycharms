@@ -1,4 +1,4 @@
-package lucky.charms.portfolio;
+package luckycharms.portfolio;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +11,7 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.Range;
 
 import luckycharms.protos.portfolio.PositionProto;
-//import lucky.charms.protos.PositionProto;
+//import luckycharms.protos.PositionProto;
 import luckycharms.time.units.DaysKey;
 import luckycharms.util.sizeable.ISizeable;
 import luckycharms.util.sizeable.LazySizeable;

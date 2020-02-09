@@ -1,4 +1,4 @@
-package lucky.charms.runner.pickers;
+package luckycharms.runner.pickers;
 
 import luckycharms.util.DualBase;
 
