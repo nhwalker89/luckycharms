@@ -33,15 +33,15 @@ public class StockDataSetViewerPage extends BorderPane {
       return new StockDataSetViewerPage(FifteenMinPriceDataSet::instance, symbols);
    }
 
-   private final Function<String, IPagedDataSet> dataSetFetcher;
+   private final Function<String, IPagedDataSet<?, ?, ?>> dataSetFetcher;
    private final List<String> symbols;
    private final ListView<String> symbolsListView;
 
-   public StockDataSetViewerPage(Function<String, IPagedDataSet> dataSetFetcher) {
+   public StockDataSetViewerPage(Function<String, IPagedDataSet<?, ?, ?>> dataSetFetcher) {
       this(dataSetFetcher, StockUniverse.SP500);
    }
 
-   public StockDataSetViewerPage(Function<String, IPagedDataSet> dataSetFetcher,
+   public StockDataSetViewerPage(Function<String, IPagedDataSet<?, ?, ?>> dataSetFetcher,
          List<String> symbols) {
       this.symbols = ImmutableList.sortedCopyOf(symbols);
       this.dataSetFetcher = Objects.requireNonNull(dataSetFetcher);
@@ -65,7 +65,7 @@ public class StockDataSetViewerPage extends BorderPane {
       if (symbol == null) {
          setCenter(new Pane());
       } else {
-         IPagedDataSet dataset = dataSetFetcher.apply(symbol);
+         IPagedDataSet<?, ?, ?> dataset = dataSetFetcher.apply(symbol);
          DataSetViewerPage<?, ?> page = new DataSetViewerPage<>(dataset.toString(),
                dataset.pagedDataSet());
          setCenter(page);

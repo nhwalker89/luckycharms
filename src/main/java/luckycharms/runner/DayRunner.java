@@ -34,7 +34,6 @@ public class DayRunner {
    private RunLog runLog = new LoggerBasedRunLog();;
    private double reserveAmount = 200.0;
    private Duration delay = Duration.ofMinutes(45);
-   private int daysToHold = 3;
 
    private DailyRunLog dailyLog = null;
 
@@ -47,8 +46,6 @@ public class DayRunner {
    public void setReserveAmount(double reserveAmount) { this.reserveAmount = reserveAmount; }
 
    public void setDelay(Duration delay) { this.delay = delay.abs(); }
-
-   public void setDaysToHold(int daysToHold) { this.daysToHold = daysToHold; }
 
    public void setRunLog(RunLog runLog) { this.runLog = runLog; }
 
@@ -151,8 +148,7 @@ public class DayRunner {
       try {
          portfolio.save(context);
       } catch (IOException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         sLog.error("Problem while trying to save Portfolio state", e);
       }
       PortfolioState state = portfolio.getState();
       PortfolioWorth worth = portfolio.getWorth(context);
