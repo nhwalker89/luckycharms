@@ -54,13 +54,18 @@ public class Tabler {
       return toString(1);
    }
 
+   private static int divCeil(int a, int b) {
+      int v = a / b;
+      return a % b == 0 ? v : v + 1;
+   }
+
    public String toString(int pillars) {
       int columns = headers.size();
       columns = Math.max(columns, rows.stream().mapToInt(List::size).max().orElse(0));
 
       int totalColumns = columns * pillars;
 
-      int maxRows = rows.size() / pillars;
+      int maxRows = divCeil(rows.size(), pillars);
       String[][] buffer = new String[maxRows + 1][columns * pillars];
 
       // Headers

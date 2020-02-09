@@ -1,7 +1,10 @@
 package lucky.charms.portfolio;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.google.common.collect.ImmutableList;
 
 import luckycharms.config.Storage;
 import luckycharms.storage.DirectoryStorageSingleSet;
@@ -11,6 +14,10 @@ import luckycharms.time.units.DaysKey;
 import luckycharms.time.units.MonthsKey;
 
 public class PortfolioDataSet extends SortedPagedDataSet<DaysKey, PortfolioWorth, MonthsKey> {
+
+   public static List<String> getSavedPortfolios() {
+      return ImmutableList.copyOf(DAILY_PRICES_DS_DIR.list());
+   }
 
    public static PortfolioDataSet instance(String symbol) {
       return instances.computeIfAbsent(symbol, PortfolioDataSet::new);

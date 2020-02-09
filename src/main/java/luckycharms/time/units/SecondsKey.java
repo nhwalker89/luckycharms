@@ -56,4 +56,7 @@ public class SecondsKey extends ATimeInterval<SecondsKey> {
       return DaysKey.of(time());
    }
 
+   public FifteenMinutesKey asFifteenMinutesKey() {
+      return FifteenMinutesKey.of(time());
+   }
 }

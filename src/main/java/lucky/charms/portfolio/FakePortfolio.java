@@ -1,11 +1,13 @@
 package lucky.charms.portfolio;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import lucky.charms.runner.EPriceHint;
 import lucky.charms.runner.IRunnerContext;
 
 public class FakePortfolio implements Portfolio {
@@ -16,9 +18,21 @@ public class FakePortfolio implements Portfolio {
    private final PortfolioDataSet dataset;
    private final String name;
 
-   public FakePortfolio(String name) {
+   public FakePortfolio(String name, boolean reset) {
       this.name = name;
       this.dataset = new PortfolioDataSet(name);
+      if (reset) {
+         try {
+            this.dataset.clear();
+         } catch (IOException e) {
+            throw new UncheckedIOException(e);
+         }
+      } else {
+         PortfolioWorth last = this.dataset.lastValue();
+         if (last != null) {
+            state = last.getPortfolioState();
+         }
+      }
    }
 
    @Override
@@ -35,7 +49,7 @@ public class FakePortfolio implements Portfolio {
 
    @Override
    public synchronized void sell(IRunnerContext ctx, Map<String, Integer> toSell) {
-      Map<String, Double> prices = ctx.currentPrices(toSell.keySet().iterator());
+      Map<String, Double> prices = ctx.currentPrices(toSell.keySet().iterator(), EPriceHint.LOW);
 
       Map<String, Integer> selling = new HashMap<>();
       double profit = 0.0;
@@ -43,13 +57,14 @@ public class FakePortfolio implements Portfolio {
       for (Entry<String, Integer> entry : toSell.entrySet()) {
          Double optPrice = prices.get(entry.getKey());
          if (optPrice == null) {
-            sLog.error("Cannot sell {}. Price undetermined.", entry.getKey());
+            sLog.error("RunDate:{} Selling {} shares of {} for $0.00 since price was undetermined.",
+                  ctx.clock().marketTimeState().marketDateTime(), entry.getValue(), entry.getKey());
          } else {
             double price = optPrice.doubleValue();
             double madeMoney = entry.getValue().intValue() * price;
             profit += madeMoney;
-            selling.put(entry.getKey(), entry.getValue());
          }
+         selling.put(entry.getKey(), entry.getValue());
       }
       state = state.removePositions(selling).updateCash(state.getCash() + profit);
    }
@@ -61,7 +76,7 @@ public class FakePortfolio implements Portfolio {
 
    @Override
    public void buy(IRunnerContext ctx, Map<String, Integer> toBuy) {
-      Map<String, Double> prices = ctx.currentPrices(toBuy.keySet().iterator());
+      Map<String, Double> prices = ctx.currentPrices(toBuy.keySet().iterator(), EPriceHint.HIGH);
 
       Map<String, Integer> buys = new HashMap<>();
       double cost = 0.0;

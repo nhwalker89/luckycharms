@@ -120,7 +120,7 @@ public interface IClock {
       @Override
       public OptionalDouble percentRemaining() {
          double span = end.index() - start.index() + 1;
-         double elapsed = currentDay.index() - start.index();
+         double elapsed = currentDay.index() - start.index() + 1;
          return OptionalDouble.of(elapsed / span);
       }
    }

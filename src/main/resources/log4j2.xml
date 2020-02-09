@@ -32,18 +32,41 @@
 			filePattern="${basePath}/luckycharms-%d{yyyy-MM-dd}-%i.log"
 			append="true">
 			<PatternLayout pattern="${baseFormat}" />
-			<MarkerFilter marker="REST" onMatch="DENY"
-				onMismatch="NEUTRAL" />
+			<Filters>
+				<MarkerFilter marker="REST" onMatch="DENY"
+					onMismatch="NEUTRAL" />
+				<MarkerFilter marker="REPORT" onMatch="DENY"
+	            onMismatch="NEUTRAL" />
+         </Filters>
 			<Policies>
 				<OnStartupTriggeringPolicy />
 				<TimeBasedTriggeringPolicy interval="1" />
 			</Policies>
 			<DefaultRolloverStrategy max="3" />
 		</RollingRandomAccessFile>
+		
+		
+		<RollingRandomAccessFile name="report_log"
+         fileName="${basePath}/luckycharms-report.log"
+         filePattern="${basePath}/luckycharms-report-%d{yyyy-MM-dd}-%i.log"
+         append="true">
+         <PatternLayout pattern="${baseFormat}" />
+         <MarkerFilter marker="REPORT" onMatch="ACCEPT"
+            onMismatch="DENY" />
+         <Policies>
+            <OnStartupTriggeringPolicy />
+            <TimeBasedTriggeringPolicy interval="1" />
+         </Policies>
+         <DefaultRolloverStrategy max="3" />
+      </RollingRandomAccessFile>
 
 		<Console name="console" target="SYSTEM_OUT">
-			<MarkerFilter marker="REST" onMatch="DENY"
-				onMismatch="NEUTRAL" />
+			<Filters>
+            <MarkerFilter marker="REST" onMatch="DENY"
+               onMismatch="NEUTRAL" />
+            <MarkerFilter marker="REPORT" onMatch="DENY"
+               onMismatch="NEUTRAL" />
+         </Filters>
 			<PatternLayout pattern="%highlight{${baseFormat}}" />
 		</Console>
 
@@ -53,6 +76,7 @@
 		<Root level="info" additivity="false">
 			<appender-ref ref="console" />
 			<appender-ref ref="file_log" />
+			<appender-ref ref="report_log" />
 			<appender-ref ref="async_rest_log" />
 		</Root>
 

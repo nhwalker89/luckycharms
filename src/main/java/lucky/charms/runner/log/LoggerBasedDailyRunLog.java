@@ -35,6 +35,7 @@ public class LoggerBasedDailyRunLog implements DailyRunLog {
    public void logStocksPicked(List<String> picks) {
       sLog.info(REPORT, "{} Picked Stocks \n{}", this::localTime, () -> {
          Tabler table = new Tabler();
+         table.headers("SYM");
          picks.forEach(table::row);
          return table.toString(4);
       });

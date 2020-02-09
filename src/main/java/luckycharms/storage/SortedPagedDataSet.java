@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -206,18 +208,29 @@ public class SortedPagedDataSet<K extends Comparable<? super K> & ISizeable, V e
       onChange();
    }
 
+   @Override
+   public K lastKey() {
+      SortedPagedData page = pagedDataSet.lastValue();
+      if (page != null) {
+         return page.keys().pollLast();
+      }
+      return null;
+   }
+
    protected String formatPagedData(SortedPagedData data) {
       return formatPagedDataMultiLine(data);
    }
 
    protected String formatPagedDataSingleLine(SortedPagedData data) {
-      return data.asMap().entrySet().stream()
+      return data.asMap().entrySet().stream()//
+            .sorted(Comparator.<Entry<K, V>, K>comparing(Entry::getKey).reversed())//
             .map(entry -> entry.getKey().toString() + " = " + entry.getValue().toString())
             .collect(Collectors.joining(DIVISOR));
    }
 
    protected String formatPagedDataMultiLine(SortedPagedData data) {
-      return data.asMap().entrySet().stream()
+      return data.asMap().entrySet().stream()//
+            .sorted(Comparator.<Entry<K, V>, K>comparing(Entry::getKey).reversed())//
             .map(entry -> entry.getKey().toString() + "\n" + entry.getValue().toString())
             .collect(Collectors.joining(DIVISOR));
    }

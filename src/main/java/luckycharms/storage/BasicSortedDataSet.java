@@ -57,4 +57,9 @@ public class BasicSortedDataSet<K extends Comparable<? super K> & ISizeable, V e
       keySet.clear();
       super.clear();
    }
+
+   @Override
+   public K lastKey() {
+      return keySet.pollLast();
+   }
 }

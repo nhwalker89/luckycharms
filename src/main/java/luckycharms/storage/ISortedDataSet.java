@@ -12,4 +12,19 @@ public interface ISortedDataSet<K extends Comparable<? super K>, V> extends IDat
       return getAll(keys(range));
    }
 
+   K lastKey();
+
+   default V lastValue() {
+      K key = lastKey();
+      return key == null ? null : get(key);
+   }
+
+   default KeyValuePair<K, V> latestEntry() {
+      K key = lastKey();
+      if (key == null) {
+         return null;
+      }
+      V value = get(key);
+      return value == null ? null : new KeyValuePair<>(key, value);
+   }
 }

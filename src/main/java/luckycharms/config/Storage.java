@@ -19,6 +19,9 @@ public class Storage {
    public static final File dailyPricesDatasetDir = new File(rootDirectory,
          "daily-prices-datasets");
 
+   public static final File fifteenMinsPricesDatasetDir = new File(rootDirectory,
+         "15Min-prices-datasets");
+
    public static final File portfolioDatasetDir = new File(rootDirectory, "portfolio-datasets");
 
    static {
@@ -27,6 +30,7 @@ public class Storage {
          createDirIfMissing(rootDirectory);
          createDirIfMissing(marketDayDatasetDir);
          createDirIfMissing(dailyPricesDatasetDir);
+         createDirIfMissing(fifteenMinsPricesDatasetDir);
          createDirIfMissing(portfolioDatasetDir);
 
       } catch (Exception e) {

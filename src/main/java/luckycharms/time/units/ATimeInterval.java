@@ -4,6 +4,7 @@ import java.io.UncheckedIOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.OptionalLong;
 import java.util.function.LongFunction;
 
@@ -88,6 +89,10 @@ public abstract class ATimeInterval<X extends ATimeInterval<X>>
       return time == null ? time = interval().toTime(index) : time;
    }
 
+   public String toIsoFormat() {
+      return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(time());
+   }
+
    public LocalDateTime marketDateTime() {
       return time().toLocalDateTime();
    }
@@ -120,6 +125,10 @@ public abstract class ATimeInterval<X extends ATimeInterval<X>>
 
    public MonthsKey asMonthKey() {
       return MonthsKey.of(time());
+   }
+
+   public DaysKey asDaysKey() {
+      return DaysKey.of(time());
    }
 
    public IndexedKeyProto toProto() {

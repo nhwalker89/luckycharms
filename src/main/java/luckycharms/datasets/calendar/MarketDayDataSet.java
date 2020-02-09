@@ -24,7 +24,7 @@ public class MarketDayDataSet extends SortedPagedDataSet<DaysKey, MarketDayData,
 
    public static void main(String[] args) {
       try {
-         MarketDayDataSet.instance().update();
+         MarketDayDataSet.instance().restartDataset();
       } catch (IOException e1) {
          // TODO Auto-generated catch block
          e1.printStackTrace();
@@ -60,7 +60,8 @@ public class MarketDayDataSet extends SortedPagedDataSet<DaysKey, MarketDayData,
          Instant instant = Instant.ofEpochMilli(lastUpdate);
          LocalDate lastUpdateDate = MarketTimeUtils.inMarketTime(instant).toLocalDate();
          if (lastUpdateDate.isBefore(MarketTimeUtils.now().toLocalDate())) {
-            fetch(lastUpdateDate.minusDays(10), LocalDate.now());/* 10 day overlap buffer */
+            fetch(lastUpdateDate.minusDays(10),
+                  LocalDate.now().plusDays(3));/* -10/+3 day overlap buffer */
          } // else we are already up to date
          index().putLong("last_update", System.currentTimeMillis());
          saveIndex();
@@ -69,7 +70,7 @@ public class MarketDayDataSet extends SortedPagedDataSet<DaysKey, MarketDayData,
 
    public void restartDataset() throws IOException {
       clear();
-      fetch(DATASET_DESIRED_START, LocalDate.now());
+      fetch(DATASET_DESIRED_START, LocalDate.now().plusDays(3));
       index().putLong("last_update", System.currentTimeMillis());
       saveIndex();
    }

@@ -15,15 +15,17 @@ public class BacktestMain {
 
    public static void main(String[] args) throws IOException {
       List<String> symbols = StockUniverse.SP500;
-//      MarketDayDataSet.instance().update();
-//      DailyPriceDataSet.update(symbols);
-      BacktestRunnerContext context = new BacktestRunnerContext(symbols, DaysKey.of(2015, 01, 01),
+
+      BacktestRunnerContext context = new BacktestRunnerContext(symbols, //
+            DaysKey.of(2018, 01, 01), //
             DaysKey.now());
       IPicker picker = new HighestVolumePicker();
-      FakePortfolio portfolio = new FakePortfolio("PortfolioTest");
+      FakePortfolio portfolio = new FakePortfolio("PortfolioTest", true);
       portfolio.addCash(10_000);
       DayRunner runner = new DayRunner(context, picker, portfolio);
       runner.run();
+
+      System.out.println("done");
    }
 
 }

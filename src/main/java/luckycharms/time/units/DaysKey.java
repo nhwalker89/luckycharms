@@ -3,7 +3,6 @@ package luckycharms.time.units;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.OptionalLong;
 
 import com.google.common.base.Converter;
@@ -60,10 +59,6 @@ public class DaysKey extends ATimeInterval<DaysKey> {
    @Override
    protected DaysKey createNew(long index) {
       return new DaysKey(index);
-   }
-
-   public String toIsoFormat() {
-      return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(time());
    }
 
    @Override

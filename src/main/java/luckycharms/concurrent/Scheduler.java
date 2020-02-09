@@ -13,6 +13,7 @@ public class Scheduler {
 
    private static final ScheduledExecutorService sEx = Executors
          .newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()//
+               .setDaemon(true)//
                .setNameFormat("Scheduler-%d")//
                .setUncaughtExceptionHandler((thread, throwable) -> //
                sLog.error("Unexpected Error on Thread {}", thread, throwable))//

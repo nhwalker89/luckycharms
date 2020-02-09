@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 
 import luckycharms.alpaca.json.bars.BarsEndpointResponse;
@@ -32,7 +34,10 @@ import luckycharms.rest.RestRequest;
 import luckycharms.rest.RestResponse;
 import luckycharms.rest.UriBuilder;
 import luckycharms.storage.KeyValuePair;
+import luckycharms.time.units.ATimeInterval;
 import luckycharms.time.units.DaysKey;
+import luckycharms.time.units.FifteenMinutesKey;
+import luckycharms.time.units.SecondsKey;
 import luckycharms.util.progress.CountingProgressManager;
 import luckycharms.util.progress.ProgressGui;
 
@@ -65,6 +70,7 @@ public class Alpaca {
    private static final String CALENDAR_ENDPOINT = API_V2_URL_ROOT + "calendar";
    private static final String BARS_ENDPOINT_ROOT = API_V1_URL_ROOT + "bars/";
    private static final String BARS_1D_ENDPOINT = BARS_ENDPOINT_ROOT + "1D";
+   private static final String BARS_15_MIN_ENDPOINT = BARS_ENDPOINT_ROOT + "15Min";
 //   private static final String CLOCK_ENDPOINT = API_V2_URL_ROOT + "clock";
 //   private static final String ORDERS_ENDPOINT = API_V2_URL_ROOT + "orders";
 //   private static final String POSITIONS_ENDPOINT = API_V2_URL_ROOT + "positions";
@@ -270,6 +276,186 @@ public class Alpaca {
                            stdLog.debug(
                                  "Skipping bar point symbol {} day {}. Not in range of {} to {}",
                                  pointJson.getKey(), dayKey, start, end);
+                        }
+                     }
+                  }
+               }
+               return results;
+            });
+      return response;
+   }
+
+   public void getBulkPriceBar1D(//
+         DaysKey start, //
+         DaysKey end, //
+         List<String> symbols, //
+         Consumer<RestResponse<Map<String, List<KeyValuePair<DaysKey, PriceBar>>>>> process) //
+         throws RestException {
+      getBulkPriceBar(start, end, symbols, process, DaysKey::of, SecondsKey::asDaysKey,
+            BARS_1D_ENDPOINT);
+   }
+
+   public void getBulkPriceBar15Min(//
+         FifteenMinutesKey start, //
+         FifteenMinutesKey end, //
+         List<String> symbols, //
+         Consumer<RestResponse<Map<String, List<KeyValuePair<FifteenMinutesKey, PriceBar>>>>> process) //
+         throws RestException {
+      getBulkPriceBar(start, end, symbols, process, FifteenMinutesKey::of,
+            SecondsKey::asFifteenMinutesKey, BARS_15_MIN_ENDPOINT);
+   }
+
+   private <T extends ATimeInterval<T>> void getBulkPriceBar(//
+         T start, //
+         T end, //
+         List<String> symbols, //
+         Consumer<RestResponse<Map<String, List<KeyValuePair<T, PriceBar>>>>> process, //
+         LongFunction<T> indexFromLong, //
+         Function<SecondsKey, T> toKey, //
+         String endpoint) //
+         throws RestException {
+      boolean isRestProgressReportsEnabled = StandardConfig.isRestProgressReportsEnabled();
+
+      final int maxSymbols = 195;
+      final long maxDays = 975;
+      int symbolIdx = 0;
+      int symbolFence;
+      List<List<String>> subsymbols = new ArrayList<>();
+      while (symbolIdx < symbols.size()) {
+         symbolFence = symbolIdx + maxSymbols;
+         List<String> subsym = symbols//
+               .subList(symbolIdx, Math.min(symbols.size(), symbolFence));
+         subsymbols.add(subsym);
+         symbolIdx = symbolFence;
+      }
+
+      class IndividualRequests {
+         T start;
+         T end;
+         List<String> symbols;
+         String description;
+      }
+      List<IndividualRequests> requests = new ArrayList<>();
+
+      long targetndex = start.index();
+      long endIndex = end.index() + 1;
+      long fence;
+      while (targetndex < endIndex) {
+         fence = targetndex + maxDays;
+         for (int i = 0; i < subsymbols.size(); i++) {
+            List<String> s = subsymbols.get(i);
+            IndividualRequests request = new IndividualRequests();
+            request.start = indexFromLong.apply(targetndex);
+            request.end = indexFromLong.apply(Math.min(fence, endIndex) - 1);
+            request.symbols = s;
+            if (isRestProgressReportsEnabled) {
+               request.description = request.start + " - " + request.end + //
+                     " [" + "Symbols " + s.get(0) + " to " + s.get(s.size() - 1) + " " + (i + 1)
+                     + "/" + subsymbols.size() + "]";
+            }
+            requests.add(request);
+         }
+         targetndex = fence;
+      }
+      CountingProgressManager progressReport = isRestProgressReportsEnabled
+            ? new CountingProgressManager(requests.size())
+            : null;
+      if (isRestProgressReportsEnabled) {
+         ProgressGui.openPopup("Bulk Fetch", progressReport, true);
+      }
+      for (int i = 0; i < requests.size(); i++) {
+         IndividualRequests request = requests.get(i);
+         RestResponse<Map<String, List<KeyValuePair<T, PriceBar>>>> response = getPriceBar(
+               request.start, request.end, request.symbols, toKey, endpoint);
+         process.accept(response);
+         if (isRestProgressReportsEnabled) {
+            progressReport.incrementCompleted(request.description);
+         }
+      }
+   }
+
+   private <T extends ATimeInterval<T>> RestResponse<Map<String, List<KeyValuePair<T, PriceBar>>>> //
+         getPriceBar(T start, T end, List<String> symbols, Function<SecondsKey, T> toKey,
+               String endpoint) throws RestException {
+      // Build Request URL
+      UriBuilder urlBldr = UriBuilder.create(endpoint);
+
+      // Set Parameters
+      String startStr = start.toIsoFormat();
+      urlBldr.queryString("start", startStr);
+      String endStr = end.next().toIsoFormat();
+      urlBldr.queryString("until", endStr);
+      urlBldr.queryString("symbols", symbols.stream().collect(Collectors.joining(",")));
+      urlBldr.queryString("limit", "1000");
+
+      URI url = urlBldr.build();
+
+      // Make Request
+      RestResponse<String> stringResponse = makeGetRequest(url);
+
+      // Map Reply to valid response type and return
+      RestResponse<Map<String, List<KeyValuePair<T, PriceBar>>>> response = stringResponse
+            .map(str -> {
+               BarsEndpointResponse json = JsonFactory.WIRE.fromJson(str,
+                     BarsEndpointResponse.class);
+               Map<String, List<KeyValuePair<T, PriceBar>>> results = new HashMap<>();
+               for (Entry<String, BarsEndpointResponse.BarForSymbol> pointJson : json.entrySet()) {
+                  List<KeyValuePair<T, PriceBar>> bars = results.computeIfAbsent(pointJson.getKey(),
+                        key -> new ArrayList<>());
+                  for (BarsEndpointResponse.BarEntry barJson : pointJson.getValue()) {
+                     if (barJson.timestamp == null) {
+                        sRequestLog.error("Bar Point was missing timestamp");
+                        stdLog.error("Bar Point was missing timestamp");
+                     } else {
+                        T barKey = toKey.apply(barJson.getTimestamp());
+                        if (barKey.compareTo(start) >= 0 && barKey.compareTo(end) <= 0) {
+                           PriceBarProto.Builder bld = PriceBarProto.newBuilder();
+                           if (barJson.close != null) {
+                              if (barJson.getClose() < 0) {
+                                 stdLog.error("Negative value {} - {}", pointJson.getKey(),
+                                       barJson);
+                              } else {
+                                 bld.getCloseBuilder().setValue(barJson.getClose());
+                              }
+                           }
+                           if (barJson.open != null) {
+                              if (barJson.getOpen().doubleValue() < 0) {
+                                 stdLog.error("Negative value {} - {}", pointJson.getKey(),
+                                       barJson);
+                              } else {
+                                 bld.getOpenBuilder().setValue(barJson.getOpen());
+                              }
+                           }
+                           if (barJson.high != null) {
+                              if (barJson.getHigh() < 0) {
+                                 stdLog.error("Negative value {} - {}", pointJson.getKey(),
+                                       barJson);
+
+                              } else {
+                                 bld.getHighBuilder().setValue(barJson.getHigh());
+                              }
+                           }
+                           if (barJson.low != null) {
+                              if (barJson.getLow() < 0) {
+                                 stdLog.error("Negative value {} - {}", pointJson.getKey(),
+                                       barJson);
+                              } else {
+                                 bld.getLowBuilder().setValue(barJson.getLow());
+                              }
+                           }
+                           if (barJson.volume != null) {
+                              if (barJson.getVolume() < 0) {
+                                 stdLog.error("Negative value {} - {}", pointJson.getKey(),
+                                       barJson);
+                              } else {
+                                 bld.getVolumeBuilder().setValue(barJson.getVolume());
+                              }
+                           }
+                           bars.add(new KeyValuePair<>(barKey, new PriceBar(bld.build())));
+                        } else {
+                           stdLog.debug(
+                                 "Skipping bar point symbol {} key {}. Not in range of {} to {}",
+                                 pointJson.getKey(), barKey, start, end);
                         }
                      }
                   }

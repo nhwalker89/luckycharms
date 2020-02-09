@@ -1,22 +1,22 @@
 package lucky.charms.runner;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Range;
 
 import lucky.charms.clock.MarketTimeStateData;
 import lucky.charms.portfolio.Portfolio;
 import lucky.charms.portfolio.PortfolioState;
 import lucky.charms.portfolio.PortfolioWorth;
 import lucky.charms.portfolio.Position;
-import lucky.charms.portfolio.PositionShareData;
 import lucky.charms.runner.log.DailyRunLog;
 import lucky.charms.runner.log.RunLog;
 import lucky.charms.runner.log.RunLog.LoggerBasedRunLog;
@@ -148,6 +148,12 @@ public class DayRunner {
    }
 
    protected void afterMarketCloses() {
+      try {
+         portfolio.save(context);
+      } catch (IOException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
       PortfolioState state = portfolio.getState();
       PortfolioWorth worth = portfolio.getWorth(context);
       dailyLog.logEndOfDayPortfolio(state, worth);
@@ -195,7 +201,7 @@ public class DayRunner {
          madeExtraBuy = false;
          for (String symbol : picks) {
             Map<String, Double> currentPrice = context
-                  .currentPrices(Iterators.singletonIterator(symbol));
+                  .currentPrices(Iterators.singletonIterator(symbol), EPriceHint.HIGH);
             Double price = currentPrice.get(symbol);
             if (price == null) {
                continue;
@@ -221,7 +227,7 @@ public class DayRunner {
 
       PortfolioWorth worth = portfolio.getWorth(context);
       PortfolioState state = portfolio.getState();
-      Map<String, Double> currentPrices = context.currentPrices(picks.iterator());
+      Map<String, Double> currentPrices = context.currentPrices(picks.iterator(), EPriceHint.HIGH);
 
       double amountPerSymbol = (worth.getTotalWorth() - reserveAmount) / picks.size();
       double availCash = worth.getPortfolioState().getCash() - reserveAmount;
@@ -267,15 +273,26 @@ public class DayRunner {
    }
 
    private Map<String, Integer> determineWhatToSell(List<String> picks) {
-      PortfolioState state = portfolio.getState();
+      PortfolioWorth worth = portfolio.getWorth(context);
+      PortfolioState state = worth.getPortfolioState();
+
       Map<String, Integer> toSell = new HashMap<>();
+      double amountPerSymbol = (worth.getTotalWorth() - reserveAmount) / picks.size();
       for (Position position : state.getPositions().values()) {
          String symbol = position.getSymbol();
          if (!picks.contains(symbol)) {
-            List<PositionShareData> positionsToSell = position.getShares(
-                  Range.atMost(context.clock().marketTimeState().today().minus(daysToHold)));
-            if (!positionsToSell.isEmpty()) {
-               toSell.put(symbol, positionsToSell.size());
+            toSell.put(symbol, position.getSharesCount());
+         } else {
+            OptionalDouble optSharePrice = worth.getPricePerShare(symbol);
+            if (optSharePrice.isEmpty()) {
+               toSell.put(symbol, position.getSharesCount());
+            } else {
+               double sharePrice = optSharePrice.getAsDouble();
+               long target = (long) Math.ceil(amountPerSymbol / sharePrice);
+               long sharesToSell = position.getSharesCount() - target;
+               if (sharesToSell > 0) {
+                  toSell.put(symbol, Math.toIntExact(sharesToSell));
+               }
             }
          }
       }

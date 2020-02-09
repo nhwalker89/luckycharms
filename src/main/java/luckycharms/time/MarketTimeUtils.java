@@ -28,6 +28,10 @@ public class MarketTimeUtils {
 
    public static final LocalTime WELL_AFTER_MARKET_CLOSE = LocalTime.of(12 + 6, 0); // 6 PM
 
+   public static final LocalTime USUAL_MARKET_OPEN = LocalTime.of(9, 30);
+
+   public static final LocalTime USUAL_MARKET_CLOSE = LocalTime.of(12 + 4, 0);
+
    public static ZonedDateTime now() {
       return ZonedDateTime.now(MARKET_CLOCK);
    }

@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.DoubleValue;
 
+import lucky.charms.runner.EPriceHint;
 import lucky.charms.runner.IRunnerContext;
 import luckycharms.protos.portfolio.PortfolioStateProto;
 import luckycharms.protos.portfolio.PortfolioWorthProto;
@@ -35,8 +36,8 @@ public class PortfolioWorth implements ISizeable {
 
    public PortfolioWorth(PortfolioState state, IRunnerContext ctx) {
       this.portfolioState = state;
-      this.pricesPerShare = ImmutableMap
-            .copyOf(ctx.currentPrices(state.getPositions().keySet().iterator()));
+      this.pricesPerShare = ImmutableMap.copyOf(
+            ctx.currentPrices(state.getPositions().keySet().iterator(), EPriceHint.DEFAULT));
    }
 
    public PortfolioWorth(PortfolioWorthProto proto) {
@@ -63,7 +64,7 @@ public class PortfolioWorth implements ISizeable {
 
    public OptionalDouble getPriceOfPosition(Position pos) {
       OptionalDouble price = getPricePerShare(pos.getSymbol());
-      if (price == null) {
+      if (price == null || price.isEmpty()) {
          return OptionalDouble.empty();
       }
       return OptionalDouble.of(price.getAsDouble() * pos.getSharesCount());

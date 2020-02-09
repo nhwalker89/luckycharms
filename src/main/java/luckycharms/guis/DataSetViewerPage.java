@@ -16,6 +16,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.text.Font;
 import luckycharms.storage.IDataSet;
 
 public class DataSetViewerPage<K, V> extends BorderPane {
@@ -41,6 +42,7 @@ public class DataSetViewerPage<K, V> extends BorderPane {
       pageKeyListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
       textArea = new TextArea();
+      textArea.setFont(Font.font("Monospace"));
       textArea.setEditable(false);
       pageKeyListView.getSelectionModel().getSelectedItems()
             .addListener(new InvalidationListener() {
